@@ -1,4 +1,5 @@
 import { promises as fs } from "fs";
+import os from "os";
 import path from "path";
 
 /**
@@ -8,8 +9,10 @@ import path from "path";
  * Two backends, selected automatically:
  *   1. A Redis REST API (Upstash / Vercel KV) when KV_REST_API_URL + KV_REST_API_TOKEN
  *      are set — this is what you want in production on serverless hosting.
- *   2. A local JSON file under `.data/` otherwise — works for `next dev` and any
- *      long-running Node server. (Ephemeral on serverless; set up KV for prod.)
+ *   2. A local JSON file in the OS temp dir otherwise — works for `next dev` and
+ *      any long-running Node server. Kept outside the project tree on purpose so
+ *      writes don't trip the dev file-watcher into rebuilding. (Ephemeral on
+ *      serverless; set up KV for prod.)
  */
 
 export type Recommendation = {
@@ -67,7 +70,7 @@ async function redisAdd(rec: Recommendation): Promise<void> {
 }
 
 // ---- File backend (dev / persistent Node host) --------------------------------
-const dataDir = path.join(process.cwd(), ".data");
+const dataDir = path.join(os.tmpdir(), "portfolio-site");
 const dataFile = path.join(dataDir, "recommendations.json");
 
 async function fileList(): Promise<Recommendation[]> {

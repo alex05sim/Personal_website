@@ -24,7 +24,7 @@ export function subsolarPoint(date: Date = new Date()): { lat: number; lon: numb
 /**
  * Convert lat/lon (degrees) to a point on a sphere of the given radius, in the
  * coordinate convention that aligns with the standard equirectangular Earth
- * texture used by three.js (`earth_atmos_2048.jpg`).
+ * textures (e.g. `earth_day.jpg`).
  */
 export function latLonToVec3(
   lat: number,

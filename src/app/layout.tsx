@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { CommandMenu } from "@/components/command-menu";
-import { CustomCursor } from "@/components/custom-cursor";
-import { IntroLoader } from "@/components/intro-loader";
 import { SiteFooter } from "@/components/site-footer";
 import { HudFrame, ScrollProgress } from "@/components/site-chrome";
 import { SmoothScroll } from "@/components/smooth-scroll";
@@ -75,8 +73,6 @@ export default function RootLayout({
         {children}
         <SiteFooter />
         <CommandMenu />
-        <CustomCursor />
-        <IntroLoader />
       </body>
     </html>
   );

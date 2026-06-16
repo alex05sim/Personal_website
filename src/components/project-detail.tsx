@@ -1,6 +1,6 @@
 import { ArrowLeft, ArrowRight, ArrowUpRight, ExternalLink } from "lucide-react";
 import { domainKey, type Project } from "@/lib/portfolio-data";
-import { PcbShowcase } from "./pcb-showcase";
+import { PcbShowcase } from "./pcb-showcase-lazy";
 
 export function ProjectDetail({
   project,
@@ -67,16 +67,6 @@ export function ProjectDetail({
                 ))}
               </div>
             ) : null}
-          </div>
-
-          <div className="detail-visual" aria-hidden="true">
-            <div className="grid-bg" />
-            <div className="ring three" />
-            <div className="ring two" />
-            <div className="ring" />
-            <div className="core">
-              <Icon size={56} />
-            </div>
           </div>
         </div>
 

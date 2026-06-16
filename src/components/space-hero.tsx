@@ -18,8 +18,8 @@ import {
 import { makeAtmosphereMaterial, makeEarthMaterial } from "@/lib/earth-gl";
 import { latLonToVec3, subsolarPoint } from "@/lib/geo";
 import { profile } from "@/lib/portfolio-data";
+import { CanvasErrorBoundary } from "./canvas-error-boundary";
 import { Magnetic } from "./interactions";
-import { ScrambleText } from "./scramble-text";
 
 const BERKELEY = { name: "Berkeley, CA", lat: 37.8715, lon: -122.273 };
 const FORT_MEADE = { name: "Fort Meade, MD", lat: 39.108, lon: -76.771 };
@@ -104,9 +104,16 @@ function StarLayer({
 function StarField({ compact }: { compact: boolean }) {
   return (
     <>
-      <StarLayer count={compact ? 220 : 460} near={9} far={28} size={0.016} opacity={0.5} color="#eef2ff" speed={0.006} seed={0} />
-      <StarLayer count={compact ? 70 : 140} near={8} far={22} size={0.032} opacity={0.8} color="#f8fafc" speed={0.01} seed={5000} />
-      <StarLayer count={36} near={7} far={17} size={0.055} opacity={0.95} color="#cfe0ff" speed={0.014} seed={9000} />
+      {/* Dense background field */}
+      <StarLayer count={compact ? 400 : 900} near={12} far={38} size={0.011} opacity={0.38} color="#eef2ff" speed={0.004} seed={0} />
+      {/* Mid-distance brighter stars */}
+      <StarLayer count={compact ? 180 : 380} near={9} far={26} size={0.022} opacity={0.65} color="#f8fafc" speed={0.007} seed={5000} />
+      {/* Close vivid stars */}
+      <StarLayer count={compact ? 60 : 130} near={7} far={18} size={0.04} opacity={0.88} color="#cfe0ff" speed={0.011} seed={9000} />
+      {/* Bright foreground accent stars — warm and cool mix */}
+      <StarLayer count={compact ? 20 : 48} near={6} far={14} size={0.07} opacity={0.95} color="#ffe8c8" speed={0.016} seed={13000} />
+      {/* Very faint ultra-deep background haze */}
+      <StarLayer count={compact ? 0 : 500} near={28} far={55} size={0.008} opacity={0.22} color="#d8e4ff" speed={0.002} seed={20000} />
     </>
   );
 }
@@ -217,34 +224,59 @@ type SatelliteConfig = {
 };
 
 const satellites: SatelliteConfig[] = [
+  { radius: 1.28, speed: 0.32, phase: 0.6, tilt: [0.3, 0.1, 0.0], color: "#e0e8f4", size: 0.9 },
   { radius: 1.32, speed: 0.27, phase: 0.0, tilt: [0.5, 0.2, 0.0], color: "#d3dae6", size: 1.1 },
+  { radius: 1.36, speed: -0.24, phase: 0.9, tilt: [-0.3, 0.6, 0.2], color: "#c8d2e2", size: 0.75 },
   { radius: 1.39, speed: -0.2, phase: 1.1, tilt: [-0.42, 0.85, 0.3], color: "#aab6c8", size: 0.8 },
+  { radius: 1.43, speed: 0.22, phase: 1.7, tilt: [0.8, -0.4, 0.1], color: "#d8e0ec", size: 1.0 },
   { radius: 1.46, speed: 0.18, phase: 2.2, tilt: [1.5, -0.2, 0.05], color: "#c4cdda", size: 1 },
+  { radius: 1.50, speed: -0.19, phase: 2.8, tilt: [0.6, 1.1, -0.2], color: "#b8c4d4", size: 0.85 },
   { radius: 1.53, speed: -0.15, phase: 3.1, tilt: [0.2, 1.45, -0.3], color: "#b6c2d2", size: 0.9 },
+  { radius: 1.57, speed: 0.25, phase: 3.7, tilt: [-0.9, 0.3, 0.4], color: "#e2e8f2", size: 0.7 },
   { radius: 1.6, speed: 0.22, phase: 4.0, tilt: [1.25, 0.5, 0.2], color: "#9fadc2", size: 0.7 },
+  { radius: 1.64, speed: -0.16, phase: 4.5, tilt: [0.4, -0.8, 0.3], color: "#ccd5e3", size: 1.0 },
   { radius: 1.68, speed: -0.13, phase: 5.0, tilt: [-0.7, 1.0, 0.5], color: "#dde3ed", size: 1.2 },
+  { radius: 1.72, speed: 0.14, phase: 5.5, tilt: [1.2, 0.2, -0.1], color: "#b4c0d0", size: 0.8 },
   { radius: 1.75, speed: 0.1, phase: 0.7, tilt: [1.55, -1.0, 0.0], color: "#a7b4c7", size: 0.85 },
+  { radius: 1.79, speed: -0.12, phase: 1.2, tilt: [-0.2, 0.7, 0.5], color: "#d0d8e6", size: 0.9 },
   { radius: 1.82, speed: -0.17, phase: 2.6, tilt: [1.0, 0.9, 0.0], color: "#c0c9d8", size: 1 },
+  { radius: 1.86, speed: 0.11, phase: 3.2, tilt: [0.5, -0.5, 0.6], color: "#a8b5c6", size: 0.75 },
   { radius: 1.89, speed: 0.09, phase: 4.6, tilt: [-0.5, 0.3, 0.6], color: "#b2bed0", size: 0.75 },
+  { radius: 1.93, speed: -0.14, phase: 5.1, tilt: [0.9, 1.2, -0.3], color: "#d4dbe8", size: 1.0 },
   { radius: 1.96, speed: -0.11, phase: 1.8, tilt: [0.7, -0.6, 0.35], color: "#d6dde8", size: 0.95 },
+  { radius: 2.01, speed: 0.08, phase: 2.4, tilt: [-1.2, 0.5, 0.1], color: "#bfc8d7", size: 0.8 },
   { radius: 2.04, speed: 0.075, phase: 3.6, tilt: [-1.45, 0.4, -0.2], color: "#a3b0c4", size: 1.05 },
+  { radius: 2.08, speed: -0.09, phase: 4.1, tilt: [0.3, 1.0, 0.4], color: "#c5cedd", size: 0.7 },
   { radius: 2.12, speed: -0.07, phase: 5.6, tilt: [0.45, 1.2, 0.15], color: "#bcc6d6", size: 0.7 },
+  { radius: 2.17, speed: 0.065, phase: 0.8, tilt: [-0.8, -0.4, 0.3], color: "#d2d9e6", size: 0.9 },
   { radius: 2.21, speed: 0.062, phase: 0.3, tilt: [1.15, -0.3, 0.5], color: "#cbd3e0", size: 0.9 },
+  { radius: 2.26, speed: -0.078, phase: 1.5, tilt: [0.6, 0.8, -0.2], color: "#b8c2d1", size: 0.85 },
   { radius: 2.3, speed: -0.085, phase: 2.0, tilt: [1.5, 0.7, -0.1], color: "#b0bccf", size: 0.8 },
+  { radius: 2.35, speed: 0.055, phase: 2.9, tilt: [-0.4, -1.0, 0.5], color: "#dce3ec", size: 1.0 },
   { radius: 2.4, speed: 0.05, phase: 3.9, tilt: [-0.3, -0.9, 0.4], color: "#d9e0ea", size: 1 },
+  { radius: 2.46, speed: -0.062, phase: 4.7, tilt: [1.0, 0.3, 0.2], color: "#a9b5c5", size: 0.78 },
   { radius: 2.5, speed: -0.058, phase: 5.2, tilt: [0.9, 1.4, 0.25], color: "#9eaabf", size: 0.72 },
+  { radius: 2.56, speed: 0.048, phase: 0.5, tilt: [-1.3, 0.1, 0.6], color: "#c9d2e0", size: 0.92 },
   { radius: 2.6, speed: 0.045, phase: 1.4, tilt: [-1.5, 0.2, 0.6], color: "#c6cfdd", size: 0.95 },
+  { radius: 2.66, speed: -0.042, phase: 3.1, tilt: [0.7, -1.2, -0.2], color: "#b5c0d0", size: 0.8 },
   { radius: 2.72, speed: -0.04, phase: 4.3, tilt: [0.25, -1.3, -0.35], color: "#aeb9cc", size: 0.85 },
+  { radius: 2.78, speed: 0.038, phase: 2.2, tilt: [-0.6, 0.9, 0.3], color: "#d0d8e5", size: 0.88 },
+  { radius: 2.85, speed: -0.035, phase: 5.8, tilt: [1.1, 0.6, -0.4], color: "#bec8d6", size: 0.75 },
 ];
 
 const TRAIL = [0.05, 0.1, 0.16, 0.23, 0.31];
 
 function Satellite({ radius, speed, phase, tilt, color, size = 1 }: SatelliteConfig) {
   const orbitRef = useRef<Group>(null);
+  const glowRef = useRef<Mesh>(null);
 
   useFrame((state) => {
     if (orbitRef.current) {
       orbitRef.current.rotation.y = state.clock.elapsedTime * speed + phase;
+    }
+    if (glowRef.current) {
+      const pulse = 0.9 + Math.sin(state.clock.elapsedTime * 1.8 + phase) * 0.15;
+      glowRef.current.scale.setScalar(pulse);
     }
   });
 
@@ -252,45 +284,65 @@ function Satellite({ radius, speed, phase, tilt, color, size = 1 }: SatelliteCon
 
   return (
     <group rotation={tilt}>
+      {/* orbit ring — very faint */}
       <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[radius, 0.0011, 6, 128]} />
-        <meshBasicMaterial color={color} transparent opacity={0.12} blending={AdditiveBlending} depthWrite={false} />
+        <torusGeometry args={[radius, 0.0008, 6, 128]} />
+        <meshBasicMaterial color={color} transparent opacity={0.045} blending={AdditiveBlending} depthWrite={false} />
       </mesh>
       <group ref={orbitRef}>
         <group position={[radius, 0, 0]} scale={size}>
-          {/* solar panels — small + precise */}
-          <mesh position={[-0.03, 0, 0]}>
-            <boxGeometry args={[0.038, 0.0025, 0.018]} />
-            <meshBasicMaterial color="#33567d" />
+          {/* solar panels — wider, proper blue */}
+          <mesh position={[-0.055, 0, 0]}>
+            <boxGeometry args={[0.06, 0.003, 0.024]} />
+            <meshBasicMaterial color="#2a5c8a" />
           </mesh>
-          <mesh position={[0.03, 0, 0]}>
-            <boxGeometry args={[0.038, 0.0025, 0.018]} />
-            <meshBasicMaterial color="#33567d" />
+          <mesh position={[0.055, 0, 0]}>
+            <boxGeometry args={[0.06, 0.003, 0.024]} />
+            <meshBasicMaterial color="#2a5c8a" />
+          </mesh>
+          {/* panel cell grid highlight */}
+          <mesh position={[-0.055, 0.0015, 0]}>
+            <boxGeometry args={[0.058, 0.001, 0.022]} />
+            <meshBasicMaterial color="#4a90d4" transparent opacity={0.55} blending={AdditiveBlending} depthWrite={false} />
+          </mesh>
+          <mesh position={[0.055, 0.0015, 0]}>
+            <boxGeometry args={[0.058, 0.001, 0.022]} />
+            <meshBasicMaterial color="#4a90d4" transparent opacity={0.55} blending={AdditiveBlending} depthWrite={false} />
           </mesh>
           {/* strut */}
           <mesh>
-            <boxGeometry args={[0.05, 0.0012, 0.0012]} />
-            <meshBasicMaterial color="#6f86a8" />
+            <boxGeometry args={[0.08, 0.0014, 0.0014]} />
+            <meshBasicMaterial color="#8096b2" />
           </mesh>
           {/* body */}
           <mesh>
-            <boxGeometry args={[0.013, 0.013, 0.016]} />
+            <boxGeometry args={[0.016, 0.016, 0.02]} />
             <meshBasicMaterial color={color} />
           </mesh>
-          {/* faint glint */}
+          {/* antenna dish — tiny cone pointing outward */}
+          <mesh position={[0, 0.014, 0]} rotation={[Math.PI, 0, 0]}>
+            <coneGeometry args={[0.006, 0.012, 6]} />
+            <meshBasicMaterial color="#a8bcd0" />
+          </mesh>
+          {/* bright core glint */}
           <mesh>
-            <sphereGeometry args={[0.02, 10, 10]} />
-            <meshBasicMaterial color={color} transparent opacity={0.16} blending={AdditiveBlending} depthWrite={false} />
+            <sphereGeometry args={[0.009, 10, 10]} />
+            <meshBasicMaterial color="#ffffff" transparent opacity={0.9} blending={AdditiveBlending} depthWrite={false} />
+          </mesh>
+          {/* pulsing glow halo */}
+          <mesh ref={glowRef}>
+            <sphereGeometry args={[0.028, 10, 10]} />
+            <meshBasicMaterial color={color} transparent opacity={0.22} blending={AdditiveBlending} depthWrite={false} />
           </mesh>
         </group>
         {TRAIL.map((angle, index) => (
           <group key={index} rotation={[0, direction * angle, 0]}>
             <mesh position={[radius, 0, 0]}>
-              <sphereGeometry args={[0.0075 * (1 - index * 0.18), 8, 8]} />
+              <sphereGeometry args={[0.008 * (1 - index * 0.18), 8, 8]} />
               <meshBasicMaterial
                 color={color}
                 transparent
-                opacity={0.32 * (1 - index * 0.2)}
+                opacity={0.38 * (1 - index * 0.2)}
                 blending={AdditiveBlending}
                 depthWrite={false}
               />
@@ -509,12 +561,12 @@ function LiveEarth({ compact }: { compact: boolean }) {
       {/* Graticule — a clean lat/long grid for the "data globe" look. */}
       <mesh scale={1.003}>
         <sphereGeometry args={[1, 36, 18]} />
-        <meshBasicMaterial color="#7e93b4" wireframe transparent opacity={0.04} depthWrite={false} />
+        <meshBasicMaterial color="#7e93b4" wireframe transparent opacity={0.055} depthWrite={false} />
       </mesh>
 
       <mesh ref={cloudsRef} scale={1.008}>
         <sphereGeometry args={[1, segments, segments]} />
-        <meshStandardMaterial map={textures.clouds} transparent opacity={0.28} depthWrite={false} />
+        <meshStandardMaterial map={textures.clouds} transparent opacity={0.42} depthWrite={false} />
       </mesh>
 
       <mesh scale={1.1}>
@@ -525,7 +577,7 @@ function LiveEarth({ compact }: { compact: boolean }) {
       <LocationPin lat={BERKELEY.lat} lon={BERKELEY.lon} color="#9cc0e0" highlight />
       <LocationPin lat={FORT_MEADE.lat} lon={FORT_MEADE.lon} color="#9aa6ba" />
 
-      {(compact ? satellites.slice(0, 4) : satellites).map((satellite, index) => (
+      {(compact ? satellites.slice(0, 6) : satellites).map((satellite, index) => (
         <Satellite key={index} {...satellite} />
       ))}
     </group>
@@ -551,7 +603,7 @@ function OrbitScene({
   return (
     <Canvas
       frameloop={frameloop}
-      camera={{ position: [0, 0, 4.6], fov: 40 }}
+      camera={{ position: [-0.7, 0.1, 4.6], fov: 40 }}
       dpr={compact ? [1, 1] : [1, 1.6]}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
     >
@@ -560,7 +612,7 @@ function OrbitScene({
       <ambientLight intensity={0.02} />
       {!compact ? <CameraParallax /> : null}
       <StarField compact={compact} />
-      {!compact ? [0, 1, 2, 3].map((i) => <Meteor key={i} seed={i * 97 + 5} />) : null}
+      {!compact ? [0, 1, 2, 3, 4, 5, 6].map((i) => <Meteor key={i} seed={i * 97 + 5} />) : null}
       <LiveEarth compact={compact} />
       {!compact ? (
         <EffectComposer>
@@ -671,10 +723,13 @@ export function SpaceHero() {
         style={reduceMotion ? undefined : { y: heroY, opacity: heroOpacity }}
       >
         <div className="hero-canvas-grade absolute inset-0 cursor-grab active:cursor-grabbing">
-          <OrbitScene compact={compact} frameloop={frameloop} />
+          <CanvasErrorBoundary label="space hero">
+            <OrbitScene compact={compact} frameloop={frameloop} />
+          </CanvasErrorBoundary>
         </div>
       </motion.div>
       <div className="hero-veil pointer-events-none absolute inset-0" />
+      <div className="hero-blur-strip" />
       <div className="hero-base pointer-events-none absolute inset-x-0 bottom-0 h-64" />
 
       <div className="hero-shell relative z-10 w-full">
@@ -691,9 +746,9 @@ export function SpaceHero() {
             transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="kicker mb-7"
           >
-            <ScrambleText text="UC Berkeley · Computer Science + Data Science" />
+            UC Berkeley · Computer Science + Data Science
           </motion.p>
-          <h1 className="display text-6xl text-white sm:text-7xl lg:text-[6.5rem]">
+          <h1 className="display text-[clamp(2.4rem,8.5vw,6.5rem)] text-white">
             <span aria-label={profile.name} className="hero-name">
               {nameCharacters.map((character, index) => (
                 <motion.span

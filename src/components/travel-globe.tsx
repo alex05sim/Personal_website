@@ -1,11 +1,12 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Group, Mesh } from "three";
 import { AdditiveBlending, SRGBColorSpace, TextureLoader, Vector3 } from "three";
 import { makeAtmosphereMaterial, makeEarthMaterial } from "@/lib/earth-gl";
 import { latLonToVec3, subsolarPoint } from "@/lib/geo";
+import { CanvasErrorBoundary } from "./canvas-error-boundary";
 
 const BERKELEY = { lat: 37.8715, lon: -122.273 };
 const R = 1.42;
@@ -130,14 +131,35 @@ function TravelEarth() {
 }
 
 export function TravelGlobe() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [inView, setInView] = useState(true);
+
+  // Pause the render loop while the globe is scrolled off-screen so it isn't
+  // burning the GPU on the home/world page when nobody is looking at it.
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) {
+      return;
+    }
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), {
+      rootMargin: "200px",
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <Canvas
-      camera={{ position: [0, 0, 4.4], fov: 48 }}
-      dpr={[1, 1.5]}
-      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-    >
-      <ambientLight intensity={0.02} />
-      <TravelEarth />
-    </Canvas>
+    <CanvasErrorBoundary label="travel globe">
+      <Canvas
+        ref={canvasRef}
+        frameloop={inView ? "always" : "demand"}
+        camera={{ position: [0, 0, 4.4], fov: 48 }}
+        dpr={[1, 1.5]}
+        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+      >
+        <ambientLight intensity={0.02} />
+        <TravelEarth />
+      </Canvas>
+    </CanvasErrorBoundary>
   );
 }

@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Binary,
   BrainCircuit,
   BriefcaseBusiness,
   Building2,
@@ -63,6 +64,8 @@ export type Project = {
   highlights: ProjectHighlight[];
   stack: string[];
   links: ProjectLink[];
+  /** Optional path to a screenshot shown on the detail page, e.g. "/screenshots/foo.png". */
+  screenshotHref?: string;
   featured: boolean;
   icon: LucideIcon;
   /** Optional performance comparison rendered as bars on the detail page. */
@@ -101,8 +104,7 @@ export const profile = {
   shortName: "Alex",
   title: "CS + Data Science @ UC Berkeley",
   tagline: "Security, hardware, and AI — systems built from the board up.",
-  intro:
-    "I build systems where correctness matters — across cryptographic security, custom hardware, and GPU-accelerated AI.",
+  intro: "From satellite hardware to cryptosystems — I build for environments where getting it wrong isn't an option.",
   location: "Berkeley, CA · Olney, MD",
   availability: "Open to summer 2026 internships in software, ML, hardware, and security",
   clearance: "Previously held TS/SCI with polygraph — eligible for reactivation",
@@ -134,6 +136,7 @@ export const navigationTabs = [
   { label: "Projects", href: "/projects" },
   { label: "World", href: "/world" },
   { label: "Contact", href: "/#contact" },
+  { label: "Plain", href: "/plain" },
 ];
 
 export const domains: DomainInfo[] = [
@@ -255,27 +258,37 @@ export const projects: Project[] = [
     title: "Secure File Storage & Sharing",
     domain: "Security",
     period: "Spring 2026",
-    status: "Cryptosystem",
-    tagline: "Encrypted file storage that stays safe even when the server is the adversary.",
+    status: "CS 161 · Project 2",
+    tagline: "Zero-trust file system in Go — the server can be fully compromised and it still learns nothing.",
     summary:
-      "A storage and sharing system designed around a hostile datastore: the server can be fully compromised and still learn nothing it shouldn't, while users share and revoke access purely through cryptography.",
+      "Berkeley CS 161 (Computer Security) Project 2. The spec hands you a datastore controlled by an active adversary and asks you to build a working file system on top of it in Go — confidentiality, integrity, authenticated multi-user sharing, and cascading revocation, all without ever trusting the storage layer. Files live in Argon2-keyed chains of 1024-byte AEAD blocks. Sharing uses PKE-encrypted capability envelopes signed by the sender. Revocation rotates the file key and BFS-prunes the entire downstream access subtree.",
     problem:
-      "Most file systems trust the storage layer. This one assumes the opposite — that the datastore is controlled by an adversary who can read and tamper with anything — and still has to guarantee confidentiality, integrity, and controlled sharing.",
+      "The spec's threat model is blunt: the datastore is fully compromised — an adversary can read, modify, and replay anything on disk. The system still has to guarantee confidentiality, integrity, authenticated sharing, cascading revocation, and O(1) append bandwidth. Go was the implementation language, which meant marshaling crypto keys to JSON, working with interface{} primitives, and keeping the 5-layer pointer chain consistent across sessions.",
     approach: [
-      "Designed a storage architecture resilient to malicious-datastore adversaries.",
-      "Implemented authenticated encryption using AES and HMAC with secure key derivation.",
-      "Built file sharing and revocation on top of cryptographic access control, so access is granted and revoked by keys rather than trust.",
+      "Chose implicit authentication over a separate password verifier. Argon2 derives a 32-byte masterKey directly from credentials — if the password is wrong, the masterKey is wrong, and HMAC verification silently fails when unsealing the UserRecord. No extra round-trip to the datastore, no verifier an attacker can query. Getting this right in Go meant carefully sequencing the JSON unmarshal of PKE and DS private keys after decryption.",
+      "Stored files as a 5-layer cryptographic pointer chain: User → Access → AccessNode → FileMetadata → 1024-byte FileBlocks, each AEAD-sealed under a per-file FileRootKey. The spec mandated O(1) append bandwidth, which forced the tail-pointer design — AppendToFile touches only the new block, the old tail, and the metadata header, regardless of file size.",
+      "Sharing issues a sealed InviteEnvelope: an inviteRootKey encrypts the capability payload, the key is PKE-wrapped to the recipient's public key, and the whole envelope is signed with the sender's DS key so the recipient can verify origin. Each sharer gets an independent AccessNode in the capability tree — the key design decision that makes per-user revocation possible.",
+      "Cascading revocation was the hardest part. If Alice shares with Bob who shares with Carol, revoking Bob must also cut Carol — the spec was explicit about this. The solution: BFS-collect the full downstream subtree from the ShareRecord, rotate FileRootKey and MetaUUID, rewrite every block under fresh material, update all surviving AccessNodes, and tombstone pending invites to prevent accept-after-revoke. Getting the share tree traversal correct without corrupting survivor access required careful sequencing.",
     ],
     highlights: [
+      { label: "Course", value: "CS 161 · Berkeley" },
       { label: "Language", value: "Go" },
-      { label: "Crypto", value: "AES + HMAC" },
-      { label: "Threat model", value: "Malicious datastore" },
-      { label: "Sharing", value: "Cryptographic revocation" },
+      { label: "Append cost", value: "O(1) writes" },
+      { label: "Revocation", value: "Key rotation + BFS" },
     ],
-    stack: ["Go", "AES", "HMAC", "Key derivation"],
+    stack: ["Go", "Argon2", "PKE", "Digital signatures", "Encrypt-then-MAC", "AEAD"],
     links: [],
     featured: true,
-    icon: Lock,
+    icon: Binary,
+    benchmark: {
+      caption:
+        "AppendToFile issues exactly 3 datastore writes — new block, old tail pointer update, metadata tail update — regardless of how many blocks the file has grown to.",
+      unit: "Datastore writes per AppendToFile · 100-block baseline · fewer is better",
+      bars: [
+        { name: "Naive O(n) full-file rewrite", value: 100, display: "100 writes" },
+        { name: "Linked-list O(1) tail append", value: 5, display: "3 writes", accent: true },
+      ],
+    },
   },
   {
     slug: "solar-cycle-prediction",
