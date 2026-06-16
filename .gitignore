@@ -42,3 +42,4 @@ next-env.d.ts
 
 # local World recommendations store
 .data/
+*.glb
