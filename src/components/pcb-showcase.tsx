@@ -35,6 +35,11 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { CanvasErrorBoundary } from "./canvas-error-boundary";
+import { Reveal } from "./portfolio/shared";
+import { CountUp } from "./interactions";
+import { PcbDatapath } from "./pcb-datapath";
+import { PcbFirmware } from "./pcb-firmware";
+import { PcbCrypto } from "./pcb-crypto";
 
 const MODEL = "/pcb/hope_PCB_opt.glb";
 
@@ -99,26 +104,26 @@ const CALLOUTS: Callout[] = [
     desc: "A u-blox MAX-M10S receiver with its own RF front end and antenna connector fixes position and time. A backup supercapacitor holds the almanac between power cycles so the next fix comes faster.",
     color: "#6ea0ff",
     colorRgb: "110, 160, 255",
-    a: -0.44,
-    b: -0.8,
+    a: -0.38,
+    b: -0.55,
   },
   {
     id: "lora",
     label: "LoRa",
-    sub: "915 MHz LoRa",
-    spec: "915 MHz LoRa · crystal + matching net · u.FL",
-    desc: "A 915 MHz LoRa radio with a dedicated crystal, RF matching network, and u.FL antenna. It trades bandwidth for range and power, giving the board a downlink to a ground station kilometres away — the primary telemetry path.",
+    sub: "SX1262 · 915 MHz",
+    spec: "Semtech SX1262 · 915 MHz · matching net · u.FL",
+    desc: "A Semtech SX1262 LoRa transceiver at 915 MHz (SF7 / 125 kHz / 14 dBm) with its own matching network and u.FL antenna. It trades bandwidth for range and power, giving the board a downlink to a ground station kilometres away — the primary telemetry path.",
     color: "#ff6b6b",
     colorRgb: "255, 107, 107",
-    a: 0.6,
-    b: -0.8,
+    a: 0.38,
+    b: -0.56,
   },
   {
     id: "sensors",
     label: "Sensors",
-    sub: "BME688 + monitors",
-    spec: "Bosch BME688 · solar-irradiance · I/V monitors",
-    desc: "A Bosch BME688 captures temperature, humidity, pressure, and gas; a solar-irradiance sensor and per-rail current/voltage monitors track the environment and the board's own health. This is the housekeeping payload it reports.",
+    sub: "BME688 · BNO085 · RTC",
+    spec: "BME688 · BNO085 IMU · TMP117 · VEML7700 · LIS2MDL · DS3231",
+    desc: "A full housekeeping suite: a Bosch BME688 (temperature, humidity, pressure, gas), a BNO085 9-axis IMU and an LIS2MDL magnetometer for attitude, a TMP117 precision thermometer, a VEML7700 ambient-light sensor, and a DS3231 real-time clock to timestamp every frame — alongside per-rail current/voltage monitors for the board's own health.",
     color: "#2bd4ee",
     colorRgb: "43, 212, 238",
     a: 0.46,
@@ -127,9 +132,9 @@ const CALLOUTS: Callout[] = [
   {
     id: "power",
     label: "Power",
-    sub: "Battery & rails",
-    spec: "USB-C + solar in · TPS regulators · rail monitors",
-    desc: "USB-C and solar inputs feed battery management and a bank of TPS regulators. Per-rail current monitors let the firmware budget energy and ride out brownouts and patchy solar input.",
+    sub: "Solar + battery",
+    spec: "USB-C + solar · MCP73871 charger · TPS63070 · shunt monitors",
+    desc: "USB-C and solar inputs feed an MCP73871 battery charger and a TPS63070 buck-boost rail, with load switches and shunt-based current monitors so the firmware can budget energy and ride out brownouts and patchy solar input.",
     color: "#7ee0a6",
     colorRgb: "126, 224, 166",
     a: -0.43,
@@ -139,15 +144,113 @@ const CALLOUTS: Callout[] = [
 
 // the subsystem detail grid mirrors the on-board callouts, plus the security block
 // (the board's whole thesis) which has no single silkscreen marker to anchor to.
-type SubInfo = { id: string; label: string; sub: string; spec: string; desc: string };
+type SubInfo = { id: string; label: string; sub: string; spec: string; desc: string; color: string; colorRgb: string };
 const SUBSYSTEMS: SubInfo[] = [
-  ...CALLOUTS.map(({ id, label, sub, spec, desc }) => ({ id, label, sub, spec, desc })),
+  ...CALLOUTS.map(({ id, label, sub, spec, desc, color, colorRgb }) => ({ id, label, sub, spec, desc, color, colorRgb })),
   {
     id: "security",
     label: "Security",
-    sub: "ATECC608A",
-    spec: "Microchip ATECC608A secure element",
-    desc: "A Microchip ATECC608A holds a private key in tamper-resistant hardware and signs every telemetry frame. A ground station can then verify the data came from this board, unaltered — the board's whole reason for being.",
+    sub: "HMAC + replay · PQ",
+    spec: "HMAC-SHA256 auth · replay counter · ML-KEM/ML-DSA (liboqs)",
+    desc: "Every packet carries an HMAC-SHA256 tag and a strictly-increasing per-session counter, so the ground station rejects forged or replayed frames. Sessions are set up with a post-quantum ML-KEM/ML-DSA handshake (liboqs-gated). An ATECC608A secure element sits on the board for hardware key storage — firmware integration is on the roadmap.",
+    color: "#b292ff",
+    colorRgb: "178, 146, 255",
+  },
+];
+
+// headline metrics — count up on scroll. `value` is animated; `static` renders as-is.
+// Numbers verified from the KiCad project (Hope_project.kicad_pcb / .csv) + Alex's build cost.
+type Stat = {
+  value?: number;
+  prefix?: string;
+  suffix?: string;
+  decimals?: number;
+  static?: string;
+  label: string;
+  colorRgb: string;
+};
+const STATS: Stat[] = [
+  { value: 140, prefix: "~$", label: "Build cost · 1-off", colorRgb: "246, 162, 60" },
+  { value: 242, label: "Components placed", colorRgb: "110, 160, 255" },
+  { value: 2, suffix: "-layer", label: "PCB stackup", colorRgb: "126, 224, 166" },
+  { value: 203, suffix: " mm", label: "Board · square", colorRgb: "255, 107, 107" },
+  { value: 915, suffix: " MHz", label: "SX1262 LoRa", colorRgb: "43, 212, 238" },
+  { value: 128, suffix: " Mb", label: "QSPI flash", colorRgb: "178, 146, 255" },
+  { static: "9-axis", label: "BNO085 IMU", colorRgb: "246, 162, 60" },
+  { static: "ESP32-S3", label: "WROOM-1 MCU", colorRgb: "110, 160, 255" },
+];
+
+// quick-scan spec sheet — parts confirmed against the project BOM (no fabricated numbers)
+const SPECS: { k: string; v: string }[] = [
+  { k: "MCU", v: "ESP32-S3-WROOM-1" },
+  { k: "Flash", v: "AT25SF128A · 128 Mb" },
+  { k: "Radio", v: "Semtech SX1262 · 915 MHz" },
+  { k: "GNSS", v: "u-blox MAX-M10S" },
+  { k: "Sensors", v: "BME688 · BNO085 · TMP117 · VEML7700 · LIS2MDL · DS3231" },
+  { k: "Power", v: "USB-C + solar · MCP73871 · TPS63070" },
+  { k: "Security", v: "HMAC-SHA256 · replay · ML-KEM/ML-DSA" },
+  { k: "PCB", v: "2-layer · 203 mm sq · 242 parts" },
+  { k: "Build", v: "~$140 · hand-soldered" },
+];
+
+// end-to-end design process (all done by Alex)
+const PROCESS: { n: string; t: string; d: string }[] = [
+  { n: "01", t: "Schematic", d: "Captured the design in KiCad — MCU, RF chains, power tree, and the secure element." },
+  { n: "02", t: "PCB layout", d: "Placed every footprint and routed every net by hand across the board." },
+  { n: "03", t: "Firmware", d: "Wrote the ESP-IDF firmware — sensor reads, HOPE packet framing, replay guard, SX1262 downlink." },
+  { n: "04", t: "Assembly", d: "Hand-soldered the board and brought it up on the bench." },
+];
+
+// the software half — ESP-IDF firmware + Python ground station (facts from Alex's repo README)
+type SoftItem = { id: string; title: string; tag: string; desc: string; color: string; colorRgb: string };
+const SOFTWARE: SoftItem[] = [
+  {
+    id: "fw",
+    title: "Firmware",
+    tag: "C · ESP-IDF 6.0.1",
+    desc: "FreeRTOS tasks drive the SX1262 LoRa radio and a UART GNSS parser that validates NMEA checksums and tracks fix age, HDOP, altitude, speed, course, and UTC.",
+    color: "#f6a23c",
+    colorRgb: "246, 162, 60",
+  },
+  {
+    id: "gs",
+    title: "Ground station",
+    tag: "Python · Master Control",
+    desc: "A browser + classic Tk dashboard adds, pairs, audits, and exports fleet nodes, with a hardware bring-up panel that checks links, GNSS quality, the command queue, and the replay guard.",
+    color: "#6ea0ff",
+    colorRgb: "110, 160, 255",
+  },
+  {
+    id: "bridge",
+    title: "RangePi bridge",
+    tag: "SX1262 ↔ USB serial",
+    desc: "A RangePi with a matching SX1262 relays packets over a simple serial contract — TX hex out, RX hex with RSSI/SNR back — so the dashboard talks to the board over real RF.",
+    color: "#2bd4ee",
+    colorRgb: "43, 212, 238",
+  },
+  {
+    id: "transport",
+    title: "Transports",
+    tag: "LoRa · Wi-Fi · auto",
+    desc: "The same packet bytes ride LoRa, Wi-Fi UDP, or an auto mode that falls back to Wi-Fi after repeated LoRa TX failures — switchable live from the console.",
+    color: "#7ee0a6",
+    colorRgb: "126, 224, 166",
+  },
+  {
+    id: "proto",
+    title: "HOPE protocol",
+    tag: "6 types · replay-guarded",
+    desc: "One versioned packet frame for telemetry, commands, ACKs, diagnostics, and lattice handshakes. Strictly-increasing per-session counters reject stale or duplicate packets; telemetry ships as a 12-byte v1 or 36-byte v2 payload.",
+    color: "#ff6b6b",
+    colorRgb: "255, 107, 107",
+  },
+  {
+    id: "pq",
+    title: "Post-quantum",
+    tag: "ML-KEM · ML-DSA",
+    desc: "A session-rotate handshake exchanges ML-KEM public keys and ML-DSA signatures (liboqs) to derive a fresh session. The ground station verifies; the ESP32 path is wired and liboqs-gated.",
+    color: "#b292ff",
+    colorRgb: "178, 146, 255",
   },
 ];
 
@@ -362,8 +465,13 @@ function PcbModel({
     let rectMesh: Mesh | null = null;
     // silkscreen materials — faded in for the finale so they don't float as dots during teardown
     const silkMats: MeshStandardMaterial[] = [];
-    // one shared enclosure tone — anodized metal BLACK so the back tray matches the front
+    // ONE shared anodized metal-black tone + finish for BOTH enclosure shells
+    // (Component30 = front shell / board backing, Back_Enclosure = back shell) so they can never
+    // diverge in colour again. Satin (not glossy) so the front shell stays a clean dark backing
+    // for the board→layout cross-fade. The clear glass lid is separate and stays clear.
     const ENC = 0x1c1e22;
+    const encMat = () =>
+      new MeshStandardMaterial({ color: ENC, metalness: 0.78, roughness: 0.55, envMapIntensity: 0.5 });
 
     s.traverse((obj) => {
       const o = obj as Mesh;
@@ -397,34 +505,32 @@ function PcbModel({
             });
         apply(o, lidMat);
       } else if (tn === "Back_Enclosure") {
-        // anodized aluminium tray — same tone as the lid
-        apply(o, new MeshStandardMaterial({ color: ENC, metalness: 0.9, roughness: 0.46, envMapIntensity: 0.8 }));
+        // back enclosure shell — identical metal-black material as the front shell (Component30)
+        apply(o, encMat());
       } else if (tn === "Solar") {
-        // vivid solar-cell blue with a glassy clearcoat so the panel pops as it slides out
+        // deep solar-cell blue with a glassy clearcoat — pops against the black shells
         apply(
           o,
           new MeshPhysicalMaterial({
-            color: 0x2a5be0,
+            color: 0x163a82,
             metalness: 0.55,
-            roughness: 0.28,
+            roughness: 0.3,
             clearcoat: 1,
-            clearcoatRoughness: 0.18,
-            envMapIntensity: 1.0,
+            clearcoatRoughness: 0.2,
+            envMapIntensity: 0.9,
           }),
         );
       } else if (/batter/i.test(tn)) {
         // muted gunmetal cells
         apply(o, new MeshStandardMaterial({ color: 0x43464c, metalness: 0.65, roughness: 0.52, envMapIntensity: 0.5 }));
       } else if (tn.includes("Standoffs_for_enclosre")) {
-        // lid standoffs — dark metal so no silver bits show against the black enclosure
-        apply(o, new MeshStandardMaterial({ color: 0x24272c, metalness: 0.8, roughness: 0.5, envMapIntensity: 0.6 }));
+        // lid standoffs — dark metal to match the black enclosure shells (no silver bits)
+        apply(o, new MeshStandardMaterial({ color: 0x24272c, metalness: 0.8, roughness: 0.5, envMapIntensity: 0.5 }));
       } else if (tn.includes("Component30")) {
-        // the PCB substrate slab (the big board face) → dark engineering board so the
-        // white silkscreen + copper routing read against it
-        apply(
-          o,
-          new MeshStandardMaterial({ color: 0x11141b, metalness: 0.0, roughness: 0.72, envMapIntensity: 0.28 }),
-        );
+        // FRONT enclosure shell (anodized aluminium body) — NOT the board. Same metal-black material
+        // as Back_Enclosure so the two shells match; doubles as the dark backing the board → layout
+        // cross-fade resolves over, so it stays satin (no glints) and keeps its non-fading role.
+        apply(o, encMat());
       } else if (tn === "PCB_SolderMask") {
         // dark soldermask overlay (subtle PCB-green undertone) — its flat outline sizes the layout
         apply(
@@ -493,14 +599,14 @@ function PcbModel({
   const yawQ = useRef(new Quaternion()).current;
   const userQ = useRef(new Quaternion()).current;
   const userE = useRef(new Euler()).current;
-  const yAxis = useRef(new Vector3(0, 1, 0)).current;
   const target = useRef(new Vector3()).current;
   const camOff = useRef(new Vector3()).current;
   const proj = useRef(new Vector3()).current;
   const boardBox = useRef(new Box3()).current;
   const corner = useRef(new Vector3()).current;
+  const spin = useRef(0); // accumulated idle auto-orbit angle (radians)
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     const root = rootRef.current;
     if (!root) return;
     const { parts, scaleK, pcbCenter, anchors, qHero, qFocus, shadow, fadeMats, rectMesh, silkMats } = rig;
@@ -519,11 +625,13 @@ function PcbModel({
     // orientation: gentle idle sway near the top until the user grabs it, then
     // slerp hero → chip-side-facing-camera as you scroll
     const drag = dragRef.current;
-    const sway =
-      drag?.dragged
-        ? 0
-        : Math.sin(state.clock.elapsedTime * 0.4) * 0.1 * (1 - sstep(0, 0.22, p));
-    yawQ.setFromAxisAngle(yAxis, sway);
+    // continuous 360° idle auto-orbit near the top — keeps spinning until you grab it (drag) or
+    // scroll in (idle→0 freezes the spin; the slerp to qFocus then takes over for the finale)
+    const idle = drag?.dragged ? 0 : 1 - sstep(0, 0.3, p);
+    spin.current += delta * 0.6 * idle;
+    const t = state.clock.elapsedTime;
+    userE.set(Math.sin(t * 0.4) * 0.08 * idle, spin.current, 0);
+    yawQ.setFromEuler(userE);
     tmpQ.copy(qHero).premultiply(yawQ);
     root.quaternion.slerpQuaternions(tmpQ, qFocus, focus);
 
@@ -958,6 +1066,11 @@ export function PcbShowcase() {
               alt="KiCad layout of the CubeSat telemetry board — copper routing and silkscreen"
               draggable={false}
             />
+            {/* fab-drawing corner crop marks (engineering-drawing frame) */}
+            <span className="pcb-frame pcb-frame-tl" aria-hidden="true" />
+            <span className="pcb-frame pcb-frame-tr" aria-hidden="true" />
+            <span className="pcb-frame pcb-frame-bl" aria-hidden="true" />
+            <span className="pcb-frame pcb-frame-br" aria-hidden="true" />
           </div>
           <div
             className="pcb-layout-cap shell"
@@ -984,9 +1097,13 @@ export function PcbShowcase() {
           A handful of blocks share one board, wired so the data it gathers can be measured, located,
           signed, and sent — and trusted at the other end.
         </p>
-        <div className="pcb-sub-grid mt-10">
+        <Reveal className="pcb-sub-grid mt-10">
           {SUBSYSTEMS.map((c) => (
-            <div className="pcb-sub-card" key={c.id}>
+            <div
+              className="pcb-sub-card"
+              key={c.id}
+              style={{ "--c": c.color, "--c-rgb": c.colorRgb } as CSSProperties}
+            >
               <span className="pcb-sub-dot" aria-hidden="true" />
               <h3 className="pcb-sub-name">{c.label}</h3>
               <p className="pcb-sub-tag">{c.sub}</p>
@@ -994,7 +1111,83 @@ export function PcbShowcase() {
               <p className="pcb-sub-desc">{c.desc}</p>
             </div>
           ))}
-        </div>
+        </Reveal>
+
+        {/* how the data flows + gets signed */}
+        <PcbDatapath />
+
+        {/* the code that does it */}
+        <PcbFirmware />
+
+        {/* the software half — firmware + ground station */}
+        <Reveal className="pcb-soft-wrap mt-16">
+          <p className="kicker">The software</p>
+          <h2 className="display mt-3 text-3xl text-white sm:text-4xl">From board to ground station.</h2>
+          <p className="lead mt-4 max-w-2xl">
+            The board is half of it. An ESP-IDF firmware and a Python ground station move signed,
+            replay-protected telemetry over LoRa — with a Wi-Fi backup and a post-quantum session layer.
+          </p>
+          <div className="pcb-soft-grid mt-8">
+            {SOFTWARE.map((s) => (
+              <div
+                className="pcb-soft-card"
+                key={s.id}
+                style={{ "--c": s.color, "--c-rgb": s.colorRgb } as CSSProperties}
+              >
+                <span className="pcb-sub-dot" aria-hidden="true" />
+                <h3 className="pcb-sub-name">{s.title}</h3>
+                <p className="pcb-sub-tag">{s.tag}</p>
+                <p className="pcb-sub-desc">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+
+        {/* security architecture deep dive */}
+        <PcbCrypto />
+
+        {/* headline numbers + full spec sheet */}
+        <Reveal className="pcb-stats-wrap mt-16">
+          <p className="kicker">By the numbers</p>
+          <div className="pcb-stats mt-6">
+            {STATS.map((s) => (
+              <div className="pcb-stat" key={s.label} style={{ "--c-rgb": s.colorRgb } as CSSProperties}>
+                <span className="pcb-stat-v">
+                  {s.static !== undefined ? (
+                    s.static
+                  ) : (
+                    <CountUp value={s.value ?? 0} prefix={s.prefix} suffix={s.suffix} decimals={s.decimals} />
+                  )}
+                </span>
+                <span className="pcb-stat-l">{s.label}</span>
+              </div>
+            ))}
+          </div>
+          <div className="pcb-spec-grid mt-4">
+            {SPECS.map((s) => (
+              <div className="pcb-spec" key={s.k}>
+                <span className="pcb-spec-k">{s.k}</span>
+                <span className="pcb-spec-v">{s.v}</span>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+
+        {/* end-to-end process timeline */}
+        <Reveal className="pcb-process mt-16">
+          <p className="kicker">Built end-to-end</p>
+          <h2 className="display mt-3 text-3xl text-white sm:text-4xl">Schematic to solder.</h2>
+          <ol className="pcb-timeline mt-8">
+            {PROCESS.map((p) => (
+              <li className="pcb-tl-step" key={p.n}>
+                <span className="pcb-tl-node" aria-hidden="true" />
+                <span className="pcb-tl-n">{p.n}</span>
+                <h3 className="pcb-tl-t">{p.t}</h3>
+                <p className="pcb-tl-d">{p.d}</p>
+              </li>
+            ))}
+          </ol>
+        </Reveal>
       </section>
     </>
   );

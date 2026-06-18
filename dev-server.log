@@ -361,3 +361,105 @@
 ✓ Compiled in 32ms
 ✓ Compiled in 37ms
 ✓ Compiled in 75ms
+ GET /projects/cubesat-telemetry-pcb 200 in 46ms (next.js: 7ms, generate-params: 5ms, application-code: 39ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 49ms (next.js: 6ms, generate-params: 5ms, application-code: 43ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 68ms (next.js: 8ms, generate-params: 6ms, application-code: 60ms)
+ GET /icon?73181f0b905cd4a2 200 in 8ms (next.js: 2ms, application-code: 6ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 66ms (next.js: 12ms, generate-params: 5ms, application-code: 54ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 55ms (next.js: 7ms, generate-params: 5ms, application-code: 48ms)
+ GET /icon?73181f0b905cd4a2 200 in 7ms (next.js: 1352µs, application-code: 5ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 50ms (next.js: 7ms, generate-params: 5ms, application-code: 43ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 757ms (next.js: 709ms, generate-params: 706ms, application-code: 48ms)
+ GET /icon?73181f0b905cd4a2 200 in 7ms (next.js: 1268µs, application-code: 5ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 654ms (next.js: 607ms, generate-params: 604ms, application-code: 47ms)
+ GET /icon?73181f0b905cd4a2 200 in 8ms (next.js: 1830µs, application-code: 6ms)
+✓ Compiled in 33ms
+ GET /projects/cubesat-telemetry-pcb 200 in 48ms (next.js: 7ms, generate-params: 5ms, application-code: 41ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 53ms (next.js: 7ms, generate-params: 5ms, application-code: 46ms)
+✓ Compiled in 34ms
+✓ Compiled in 34ms
+✓ Compiled in 32ms
+ GET /projects/cubesat-telemetry-pcb 200 in 50ms (next.js: 7ms, generate-params: 5ms, application-code: 43ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 51ms (next.js: 6ms, generate-params: 5ms, application-code: 44ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 54ms (next.js: 7ms, generate-params: 5ms, application-code: 47ms)
+ GET /icon?73181f0b905cd4a2 200 in 7ms (next.js: 1518µs, application-code: 5ms)
+✓ Compiled in 31ms
+✓ Compiled in 34ms
+ GET /projects/cubesat-telemetry-pcb 200 in 46ms (next.js: 7ms, generate-params: 5ms, application-code: 39ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 49ms (next.js: 7ms, generate-params: 5ms, application-code: 43ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 49ms (next.js: 7ms, generate-params: 6ms, application-code: 42ms)
+ GET / 200 in 73ms (next.js: 3ms, application-code: 70ms)
+ GET /projects 200 in 38ms (next.js: 2ms, application-code: 36ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 50ms (next.js: 7ms, generate-params: 5ms, application-code: 43ms)
+✓ Compiled in 31ms
+✓ Compiled in 37ms
+✓ Compiled in 30ms
+✓ Compiled in 30ms
+✓ Compiled in 33ms
+✓ Compiled in 75ms
+✓ Compiled in 64ms
+ GET /projects/cubesat-telemetry-pcb 200 in 46ms (next.js: 7ms, generate-params: 5ms, application-code: 39ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 44ms (next.js: 6ms, generate-params: 5ms, application-code: 38ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 51ms (next.js: 7ms, generate-params: 5ms, application-code: 44ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 64ms (next.js: 8ms, generate-params: 6ms, application-code: 56ms)
+ GET /icon?73181f0b905cd4a2 200 in 8ms (next.js: 1530µs, application-code: 6ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 49ms (next.js: 6ms, generate-params: 5ms, application-code: 43ms)
+ GET /icon?73181f0b905cd4a2 200 in 7ms (next.js: 1891µs, application-code: 5ms)
+ GET / 200 in 61ms (next.js: 2ms, application-code: 59ms)
+ GET /projects 200 in 51ms (next.js: 2ms, application-code: 49ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 69ms (next.js: 25ms, generate-params: 24ms, application-code: 44ms)
+✓ Compiled in 41ms
+✓ Compiled in 41ms
+✓ Compiled in 40ms
+ GET /projects/cubesat-telemetry-pcb 200 in 59ms (next.js: 18ms, generate-params: 15ms, application-code: 41ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 64ms (next.js: 18ms, generate-params: 16ms, application-code: 46ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 72ms (next.js: 9ms, generate-params: 7ms, application-code: 63ms)
+ GET /icon?73181f0b905cd4a2 200 in 7ms (next.js: 1699µs, application-code: 6ms)
+✓ Compiled in 35ms
+✓ Compiled in 34ms
+✓ Compiled in 38ms
+ GET /projects/cubesat-telemetry-pcb 200 in 57ms (next.js: 7ms, generate-params: 5ms, application-code: 49ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 58ms (next.js: 9ms, generate-params: 5ms, application-code: 49ms)
+ GET /icon?73181f0b905cd4a2 200 in 7ms (next.js: 1552µs, application-code: 6ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 68ms (next.js: 9ms, generate-params: 7ms, application-code: 59ms)
+ GET /icon?73181f0b905cd4a2 200 in 9ms (next.js: 2ms, application-code: 6ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 739ms (next.js: 682ms, generate-params: 680ms, application-code: 57ms)
+ GET /icon?73181f0b905cd4a2 200 in 8ms (next.js: 2ms, application-code: 6ms)
+ GET / 200 in 61ms (next.js: 2ms, application-code: 59ms)
+✓ Compiled in 90ms
+ GET /projects/cubesat-telemetry-pcb 200 in 228ms (next.js: 58ms, generate-params: 6ms, application-code: 170ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 51ms (next.js: 8ms, generate-params: 6ms, application-code: 44ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 45ms (next.js: 7ms, generate-params: 5ms, application-code: 38ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 57ms (next.js: 9ms, generate-params: 6ms, application-code: 49ms)
+✓ Compiled in 43ms
+✓ Compiled in 38ms
+✓ Compiled in 43ms
+✓ Compiled in 40ms
+✓ Compiled in 39ms
+✓ Compiled in 39ms
+✓ Compiled in 40ms
+✓ Compiled in 101ms
+✓ Compiled in 86ms
+✓ Compiled in 83ms
+✓ Compiled in 35ms
+✓ Compiled in 90ms
+✓ Compiled in 41ms
+✓ Compiled in 42ms
+ GET /projects/cubesat-telemetry-pcb 200 in 88ms (next.js: 30ms, generate-params: 26ms, application-code: 58ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 82ms (next.js: 25ms, generate-params: 23ms, application-code: 57ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 85ms (next.js: 26ms, generate-params: 24ms, application-code: 59ms)
+ GET /icon?73181f0b905cd4a2 200 in 10ms (next.js: 2ms, application-code: 8ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 51ms (next.js: 9ms, generate-params: 5ms, application-code: 42ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 66ms (next.js: 7ms, generate-params: 6ms, application-code: 59ms)
+ GET /icon?73181f0b905cd4a2 200 in 7ms (next.js: 1614µs, application-code: 5ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 54ms (next.js: 7ms, generate-params: 5ms, application-code: 48ms)
+ GET /icon?73181f0b905cd4a2 200 in 7ms (next.js: 1422µs, application-code: 5ms)
+ GET /projects/cubesat-telemetry-pcb 200 in 59ms (next.js: 8ms, generate-params: 6ms, application-code: 52ms)
+ GET /icon?73181f0b905cd4a2 200 in 8ms (next.js: 1635µs, application-code: 6ms)
+✓ Compiled in 32ms
+✓ Compiled in 30ms
+✓ Compiled in 34ms
+✓ Compiled in 29ms
+✓ Compiled in 34ms
+✓ Compiled in 45ms
+✓ Compiled in 70ms
