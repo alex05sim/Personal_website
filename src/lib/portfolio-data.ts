@@ -66,6 +66,8 @@ export type Project = {
   links: ProjectLink[];
   /** Optional path to a screenshot shown on the detail page, e.g. "/screenshots/foo.png". */
   screenshotHref?: string;
+  /** Optional media gallery (images / GIFs / video) shown on the detail page. */
+  gallery?: { src: string; caption?: string; video?: boolean }[];
   featured: boolean;
   icon: LucideIcon;
   /** Optional performance comparison rendered as bars on the detail page. */
@@ -97,8 +99,6 @@ export type TravelStop = {
   coordinates: string;
 };
 
-// NOTE: githubHref / linkedinHref are pending real URLs from Alex — update in one
-// place here and they flow everywhere. resumeHref expects /public/resume.pdf.
 export const profile = {
   name: "Alex Simpson",
   shortName: "Alex",
@@ -110,8 +110,8 @@ export const profile = {
   clearance: "Previously held TS/SCI with polygraph — eligible for reactivation",
   email: "alex05sim@berkeley.edu",
   resumeHref: "/resume.pdf",
-  githubHref: "https://github.com/", // TODO: real GitHub URL
-  linkedinHref: "https://www.linkedin.com/", // TODO: real LinkedIn URL
+  githubHref: "https://github.com/alex05sim",
+  linkedinHref: "https://www.linkedin.com/in/alexander-simpson-405aa9253/",
 };
 
 export const education = {
@@ -134,6 +134,7 @@ export const navigationTabs = [
   { label: "Home", href: "/" },
   { label: "Work", href: "/#work" },
   { label: "Projects", href: "/projects" },
+  { label: "Skills", href: "/#skills" },
   { label: "World", href: "/world" },
   { label: "Contact", href: "/#contact" },
   { label: "Plain", href: "/plain" },
@@ -207,12 +208,18 @@ export const projects: Project[] = [
     ],
     highlights: [
       { label: "MCU", value: "ESP32-S3" },
-      { label: "Secure element", value: "ATECC608A" },
+      { label: "Radio", value: "SX1262 · 915 MHz" },
       { label: "Link", value: "LoRa + GNSS" },
-      { label: "Trust model", value: "Hardware-signed packets" },
+      { label: "Trust model", value: "HMAC + post-quantum" },
     ],
-    stack: ["KiCad", "C", "ESP32-S3", "LoRa", "GNSS", "ATECC608A"],
-    links: [],
+    stack: ["KiCad", "ESP-IDF", "C", "Python", "SX1262", "GNSS", "ML-KEM/ML-DSA"],
+    links: [
+      { label: "View on GitHub", href: "https://github.com/alex05sim/CubeSat-telemetry-" },
+    ],
+    gallery: [
+      { src: "/screenshots/cubesat-board.jpg", caption: "The assembled board, hand-soldered." },
+      { src: "/screenshots/cubesat-dashboard.mp4", video: true, caption: "Master Control ground station, live." },
+    ],
     featured: true,
     icon: Satellite,
   },
@@ -241,6 +248,7 @@ export const projects: Project[] = [
     ],
     stack: ["Python", "CuPy", "NumPy", "VisPy", "CUDA"],
     links: [],
+    gallery: [{ src: "/screenshots/orbital-sim.png", caption: "GPU-accelerated N-body run, 3D view." }],
     featured: true,
     icon: Orbit,
     benchmark: {
@@ -314,6 +322,7 @@ export const projects: Project[] = [
     ],
     stack: ["Python", "Pandas", "scikit-learn", "NumPy"],
     links: [],
+    gallery: [{ src: "/screenshots/solar.png", caption: "Forecast vs. observed sunspot number." }],
     featured: false,
     icon: SunMedium,
   },

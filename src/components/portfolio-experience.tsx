@@ -469,8 +469,7 @@ function ExperienceSection() {
           <aside className="grid content-start gap-6">
             <Reveal>
               <div className="card flex items-center gap-4 p-5">
-                {/* Replace this div with <img src="/headshot.jpg" alt={profile.name} className="profile-photo-img" /> when ready */}
-                <div className="profile-photo-placeholder">AS</div>
+                <img src="/headshot.jpg" alt={profile.name} className="profile-photo-img" />
                 <div>
                   <p className="text-base font-semibold leading-tight text-white">{profile.name}</p>
                   <p className="mt-1 text-sm text-[var(--muted)]">{profile.title}</p>
@@ -499,21 +498,6 @@ function ExperienceSection() {
                     </Chip>
                   ))}
                 </div>
-              </div>
-            </Reveal>
-
-            <Reveal delay={0.08}>
-              <div className="card grid gap-5 p-6">
-                {skills.map((group) => (
-                  <div className="skill-group" key={group.label}>
-                    <span className="label">{group.label}</span>
-                    <div className="flex flex-wrap gap-2">
-                      {group.items.map((item) => (
-                        <Chip key={item}>{item}</Chip>
-                      ))}
-                    </div>
-                  </div>
-                ))}
               </div>
             </Reveal>
           </aside>
@@ -581,6 +565,38 @@ export function ContactSection() {
   );
 }
 
+function SkillsSection() {
+  return (
+    <section id="skills" className="section section-bordered">
+      <div className="shell">
+        <Reveal className="section-head">
+          <p className="kicker">Toolbox</p>
+          <ScrambleText
+            as="h2"
+            className="display text-4xl text-white sm:text-5xl"
+            text="The tools I reach for."
+          />
+        </Reveal>
+
+        <div className="skills-grid mt-12">
+          {skills.map((group, index) => (
+            <Reveal key={group.label} delay={index * 0.05}>
+              <div className="card skill-card">
+                <span className="label">{group.label}</span>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {group.items.map((item) => (
+                    <Chip key={item}>{item}</Chip>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function PortfolioExperience() {
   const [invaderActive, setInvaderActive] = useState(false);
 
@@ -594,6 +610,7 @@ export function PortfolioExperience() {
       <SelectedWork />
       <ResearchSection />
       <ExperienceSection />
+      <SkillsSection />
       <ContactSection />
       <SiteInvader active={invaderActive} onToggle={() => setInvaderActive((current) => !current)} />
     </main>

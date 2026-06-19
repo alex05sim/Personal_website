@@ -941,6 +941,53 @@ input:focus-visible,
   text-transform: uppercase;
 }
 
+/* standalone Skills section grid */
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem;
+}
+.skill-card {
+  padding: 1.5rem;
+}
+.skill-card .label {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: var(--muted-2);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* project media gallery (detail pages) */
+.media-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: 1rem;
+}
+.media-item {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--bg-1);
+}
+.media-el {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: #05060c;
+}
+.media-cap {
+  padding: 0.7rem 1rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  border-top: 1px solid var(--line);
+}
+
 .edu-card { padding: 1.6rem; display: grid; gap: 1rem; }
 .edu-card .row { display: flex; align-items: center; gap: 0.8rem; }
 .edu-card h3 { color: #fff; font-size: 1.16rem; font-weight: 620; }

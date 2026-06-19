@@ -1,6 +1,7 @@
 import { ArrowLeft, ArrowRight, ArrowUpRight, ExternalLink } from "lucide-react";
 import { domainKey, type Project } from "@/lib/portfolio-data";
 import { PcbShowcase } from "./pcb-showcase-lazy";
+import { MediaGallery } from "./media-gallery";
 
 export function ProjectDetail({
   project,
@@ -83,6 +84,8 @@ export function ProjectDetail({
       {showcase ? <PcbShowcase /> : null}
 
       <div className="shell relative pb-8">
+        <MediaGallery items={project.gallery} label={showcase ? "In the field" : "Gallery"} />
+
         <div className="mt-16 grid gap-12 lg:grid-cols-[1fr_1.45fr]">
           <div className="detail-section">
             <p className="kicker">The problem</p>
