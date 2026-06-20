@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { projects } from "@/lib/portfolio-data";
 
@@ -17,13 +18,14 @@ export default async function PlainProjectPage({
   return (
     <>
       <p className="plain-note">
-        <a href="/plain/projects">← all projects</a>
+        <Link href="/plain/projects">&lt;- all projects</Link>
       </p>
 
       <h1>{project.title}</h1>
       <p className="plain-note">
-        {project.domain} · {project.period} · {project.status}
+        {project.domain} - {project.period} - {project.status}
       </p>
+      <p className="plain-note">proof: {project.verification}</p>
       <p>
         <em>{project.tagline}</em>
       </p>
@@ -75,9 +77,9 @@ export default async function PlainProjectPage({
       <hr />
 
       <p>
-        <a href="/plain/projects">← back to projects</a>
-        {" · "}
-        <a href={`/projects/${project.slug}`}>view in fancy version →</a>
+        <Link href="/plain/projects">&lt;- back to projects</Link>
+        {" - "}
+        <Link href={`/projects/${project.slug}`}>view in fancy version -&gt;</Link>
       </p>
     </>
   );

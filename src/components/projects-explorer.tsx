@@ -2,6 +2,7 @@
 
 import { ArrowUpRight } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
+import Link from "next/link";
 import { useState } from "react";
 import { type Domain, domainKey, domains, projects } from "@/lib/portfolio-data";
 
@@ -41,41 +42,43 @@ export function ProjectsExplorer() {
             const Icon = project.icon;
 
             return (
-              <motion.a
+              <motion.div
                 className="card work-card"
                 data-domain={domainKey(project.domain)}
-                href={`/projects/${project.slug}`}
                 key={project.slug}
                 layout
                 initial={reduceMotion ? false : { opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
               >
-                <div className="work-figure">
-                  <Icon size={26} />
-                </div>
-                <div>
-                  <div className="work-meta">
-                    <span className="work-domain">{project.domain}</span>
-                    <span className="work-dot" />
-                    <span className="work-period">{project.period}</span>
-                    <span className="work-dot" />
-                    <span className="work-status">{project.status}</span>
+                <Link className="contents" href={`/projects/${project.slug}`}>
+                  <div className="work-figure">
+                    <Icon size={26} />
                   </div>
-                  <h3>{project.title}</h3>
-                  <p className="work-tagline">{project.tagline}</p>
-                  <div className="work-stack">
-                    {project.stack.slice(0, 5).map((item) => (
-                      <span className="chip chip-mono" key={item}>
-                        {item}
-                      </span>
-                    ))}
+                  <div>
+                    <div className="work-meta">
+                      <span className="work-domain">{project.domain}</span>
+                      <span className="work-dot" />
+                      <span className="work-period">{project.period}</span>
+                      <span className="work-dot" />
+                      <span className="work-status">{project.status}</span>
+                    </div>
+                    <h3>{project.title}</h3>
+                    <p className="work-tagline">{project.tagline}</p>
+                    <div className="work-stack">
+                      {project.stack.slice(0, 5).map((item) => (
+                        <span className="chip chip-mono" key={item}>
+                          {item}
+                        </span>
+                      ))}
+                      <span className="chip chip-mono">{project.verification}</span>
+                    </div>
                   </div>
-                </div>
-                <div className="work-arrow">
-                  <ArrowUpRight size={18} />
-                </div>
-              </motion.a>
+                  <div className="work-arrow">
+                    <ArrowUpRight size={18} />
+                  </div>
+                </Link>
+              </motion.div>
             );
           })}
         </div>

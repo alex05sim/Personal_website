@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 /**
  * Last-resort boundary for failures in the root layout itself. It replaces the
- * entire document, so globals.css is NOT loaded here — all styles are inlined and
+ * entire document, so globals.css is NOT loaded here - all styles are inlined and
  * self-contained on purpose.
  */
 export default function GlobalError({
@@ -46,7 +46,7 @@ export default function GlobalError({
             color: "#6ea0ff",
           }}
         >
-          ● Critical fault
+          Status: Critical fault
         </p>
         <h1 style={{ margin: 0, fontSize: "1.6rem", fontWeight: 600 }}>The site failed to load</h1>
         <p style={{ margin: 0, maxWidth: "28rem", lineHeight: 1.6, color: "#aab2c6" }}>

@@ -2,8 +2,10 @@
 
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
-import { ArrowUpRight, Download, Mail, MoonStar, SunMedium } from "lucide-react";
+import { ArrowUpRight, Crosshair, Download, Mail, MoonStar, SunMedium } from "lucide-react";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import SunCalc from "suncalc";
 import type { Group, Mesh, MeshBasicMaterial, Points, Texture } from "three";
@@ -110,7 +112,7 @@ function StarField({ compact }: { compact: boolean }) {
       <StarLayer count={compact ? 180 : 380} near={9} far={26} size={0.022} opacity={0.65} color="#f8fafc" speed={0.007} seed={5000} />
       {/* Close vivid stars */}
       <StarLayer count={compact ? 60 : 130} near={7} far={18} size={0.04} opacity={0.88} color="#cfe0ff" speed={0.011} seed={9000} />
-      {/* Bright foreground accent stars — warm and cool mix */}
+      {/* Bright foreground accent stars - warm and cool mix */}
       <StarLayer count={compact ? 20 : 48} near={6} far={14} size={0.07} opacity={0.95} color="#ffe8c8" speed={0.016} seed={13000} />
       {/* Very faint ultra-deep background haze */}
       <StarLayer count={compact ? 0 : 500} near={28} far={55} size={0.008} opacity={0.22} color="#d8e4ff" speed={0.002} seed={20000} />
@@ -223,48 +225,25 @@ type SatelliteConfig = {
   size?: number;
 };
 
+// A curated, spread-out set (was 38 — trimmed for a lighter, more polished hero).
 const satellites: SatelliteConfig[] = [
   { radius: 1.28, speed: 0.32, phase: 0.6, tilt: [0.3, 0.1, 0.0], color: "#e0e8f4", size: 0.9 },
-  { radius: 1.32, speed: 0.27, phase: 0.0, tilt: [0.5, 0.2, 0.0], color: "#d3dae6", size: 1.1 },
-  { radius: 1.36, speed: -0.24, phase: 0.9, tilt: [-0.3, 0.6, 0.2], color: "#c8d2e2", size: 0.75 },
   { radius: 1.39, speed: -0.2, phase: 1.1, tilt: [-0.42, 0.85, 0.3], color: "#aab6c8", size: 0.8 },
-  { radius: 1.43, speed: 0.22, phase: 1.7, tilt: [0.8, -0.4, 0.1], color: "#d8e0ec", size: 1.0 },
-  { radius: 1.46, speed: 0.18, phase: 2.2, tilt: [1.5, -0.2, 0.05], color: "#c4cdda", size: 1 },
-  { radius: 1.50, speed: -0.19, phase: 2.8, tilt: [0.6, 1.1, -0.2], color: "#b8c4d4", size: 0.85 },
-  { radius: 1.53, speed: -0.15, phase: 3.1, tilt: [0.2, 1.45, -0.3], color: "#b6c2d2", size: 0.9 },
-  { radius: 1.57, speed: 0.25, phase: 3.7, tilt: [-0.9, 0.3, 0.4], color: "#e2e8f2", size: 0.7 },
+  { radius: 1.5, speed: -0.19, phase: 2.8, tilt: [0.6, 1.1, -0.2], color: "#b8c4d4", size: 0.85 },
   { radius: 1.6, speed: 0.22, phase: 4.0, tilt: [1.25, 0.5, 0.2], color: "#9fadc2", size: 0.7 },
-  { radius: 1.64, speed: -0.16, phase: 4.5, tilt: [0.4, -0.8, 0.3], color: "#ccd5e3", size: 1.0 },
-  { radius: 1.68, speed: -0.13, phase: 5.0, tilt: [-0.7, 1.0, 0.5], color: "#dde3ed", size: 1.2 },
   { radius: 1.72, speed: 0.14, phase: 5.5, tilt: [1.2, 0.2, -0.1], color: "#b4c0d0", size: 0.8 },
-  { radius: 1.75, speed: 0.1, phase: 0.7, tilt: [1.55, -1.0, 0.0], color: "#a7b4c7", size: 0.85 },
-  { radius: 1.79, speed: -0.12, phase: 1.2, tilt: [-0.2, 0.7, 0.5], color: "#d0d8e6", size: 0.9 },
   { radius: 1.82, speed: -0.17, phase: 2.6, tilt: [1.0, 0.9, 0.0], color: "#c0c9d8", size: 1 },
-  { radius: 1.86, speed: 0.11, phase: 3.2, tilt: [0.5, -0.5, 0.6], color: "#a8b5c6", size: 0.75 },
-  { radius: 1.89, speed: 0.09, phase: 4.6, tilt: [-0.5, 0.3, 0.6], color: "#b2bed0", size: 0.75 },
   { radius: 1.93, speed: -0.14, phase: 5.1, tilt: [0.9, 1.2, -0.3], color: "#d4dbe8", size: 1.0 },
-  { radius: 1.96, speed: -0.11, phase: 1.8, tilt: [0.7, -0.6, 0.35], color: "#d6dde8", size: 0.95 },
-  { radius: 2.01, speed: 0.08, phase: 2.4, tilt: [-1.2, 0.5, 0.1], color: "#bfc8d7", size: 0.8 },
   { radius: 2.04, speed: 0.075, phase: 3.6, tilt: [-1.45, 0.4, -0.2], color: "#a3b0c4", size: 1.05 },
-  { radius: 2.08, speed: -0.09, phase: 4.1, tilt: [0.3, 1.0, 0.4], color: "#c5cedd", size: 0.7 },
-  { radius: 2.12, speed: -0.07, phase: 5.6, tilt: [0.45, 1.2, 0.15], color: "#bcc6d6", size: 0.7 },
   { radius: 2.17, speed: 0.065, phase: 0.8, tilt: [-0.8, -0.4, 0.3], color: "#d2d9e6", size: 0.9 },
-  { radius: 2.21, speed: 0.062, phase: 0.3, tilt: [1.15, -0.3, 0.5], color: "#cbd3e0", size: 0.9 },
-  { radius: 2.26, speed: -0.078, phase: 1.5, tilt: [0.6, 0.8, -0.2], color: "#b8c2d1", size: 0.85 },
   { radius: 2.3, speed: -0.085, phase: 2.0, tilt: [1.5, 0.7, -0.1], color: "#b0bccf", size: 0.8 },
-  { radius: 2.35, speed: 0.055, phase: 2.9, tilt: [-0.4, -1.0, 0.5], color: "#dce3ec", size: 1.0 },
-  { radius: 2.4, speed: 0.05, phase: 3.9, tilt: [-0.3, -0.9, 0.4], color: "#d9e0ea", size: 1 },
-  { radius: 2.46, speed: -0.062, phase: 4.7, tilt: [1.0, 0.3, 0.2], color: "#a9b5c5", size: 0.78 },
   { radius: 2.5, speed: -0.058, phase: 5.2, tilt: [0.9, 1.4, 0.25], color: "#9eaabf", size: 0.72 },
-  { radius: 2.56, speed: 0.048, phase: 0.5, tilt: [-1.3, 0.1, 0.6], color: "#c9d2e0", size: 0.92 },
   { radius: 2.6, speed: 0.045, phase: 1.4, tilt: [-1.5, 0.2, 0.6], color: "#c6cfdd", size: 0.95 },
-  { radius: 2.66, speed: -0.042, phase: 3.1, tilt: [0.7, -1.2, -0.2], color: "#b5c0d0", size: 0.8 },
   { radius: 2.72, speed: -0.04, phase: 4.3, tilt: [0.25, -1.3, -0.35], color: "#aeb9cc", size: 0.85 },
-  { radius: 2.78, speed: 0.038, phase: 2.2, tilt: [-0.6, 0.9, 0.3], color: "#d0d8e5", size: 0.88 },
   { radius: 2.85, speed: -0.035, phase: 5.8, tilt: [1.1, 0.6, -0.4], color: "#bec8d6", size: 0.75 },
 ];
 
-const TRAIL = [0.05, 0.1, 0.16, 0.23, 0.31];
+const TRAIL = [0.06, 0.13, 0.21];
 
 function Satellite({ radius, speed, phase, tilt, color, size = 1 }: SatelliteConfig) {
   const orbitRef = useRef<Group>(null);
@@ -284,14 +263,14 @@ function Satellite({ radius, speed, phase, tilt, color, size = 1 }: SatelliteCon
 
   return (
     <group rotation={tilt}>
-      {/* orbit ring — very faint */}
+      {/* orbit ring - very faint */}
       <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[radius, 0.0008, 6, 128]} />
+        <torusGeometry args={[radius, 0.0008, 5, 64]} />
         <meshBasicMaterial color={color} transparent opacity={0.045} blending={AdditiveBlending} depthWrite={false} />
       </mesh>
       <group ref={orbitRef}>
         <group position={[radius, 0, 0]} scale={size}>
-          {/* solar panels — wider, proper blue */}
+          {/* solar panels - wider, proper blue */}
           <mesh position={[-0.055, 0, 0]}>
             <boxGeometry args={[0.06, 0.003, 0.024]} />
             <meshBasicMaterial color="#2a5c8a" />
@@ -319,7 +298,7 @@ function Satellite({ radius, speed, phase, tilt, color, size = 1 }: SatelliteCon
             <boxGeometry args={[0.016, 0.016, 0.02]} />
             <meshBasicMaterial color={color} />
           </mesh>
-          {/* antenna dish — tiny cone pointing outward */}
+          {/* antenna dish - tiny cone pointing outward */}
           <mesh position={[0, 0.014, 0]} rotation={[Math.PI, 0, 0]}>
             <coneGeometry args={[0.006, 0.012, 6]} />
             <meshBasicMaterial color="#a8bcd0" />
@@ -395,7 +374,7 @@ function Sun({
         <sphereGeometry args={[0.13, 48, 48]} />
         <meshBasicMaterial map={texture} toneMapped={false} />
       </mesh>
-      {/* glare — camera-facing sprites so it stays consistent at any angle */}
+      {/* glare - camera-facing sprites so it stays consistent at any angle */}
       <group ref={glareRef}>
         <sprite scale={[1.7, 1.7, 1]}>
           <spriteMaterial map={glow} color="#ffe7c0" transparent opacity={0.95} blending={AdditiveBlending} depthWrite={false} />
@@ -429,7 +408,7 @@ function Moon({ texture }: { texture: Texture }) {
   });
 
   // A real lunar albedo map, lit by the scene's sun so it shows a phase. The
-  // faint cool emissive is "earthshine" — the dark side never goes pure black.
+  // faint cool emissive is "earthshine" - the dark side never goes pure black.
   return (
     <mesh ref={meshRef}>
       <sphereGeometry args={[0.24, 48, 48]} />
@@ -446,7 +425,17 @@ function Moon({ texture }: { texture: Texture }) {
   );
 }
 
-function LiveEarth({ compact }: { compact: boolean }) {
+function LiveEarth({
+  compact,
+  hopeBodyRef,
+  onHopeActivate,
+  onHopeHover,
+}: {
+  compact: boolean;
+  hopeBodyRef: React.RefObject<Group | null>;
+  onHopeActivate: () => void;
+  onHopeHover: (v: boolean) => void;
+}) {
   const groupRef = useRef<Group>(null);
   const cloudsRef = useRef<Mesh>(null);
   const draggingRef = useRef(false);
@@ -548,8 +537,8 @@ function LiveEarth({ compact }: { compact: boolean }) {
         color="#fff4e0"
       />
 
-      {/* The sun (procedural plasma) at the real sub-solar direction — the
-          earth's day/night adapts to it — and an orbiting cratered moon. */}
+      {/* The sun (procedural plasma) at the real sub-solar direction - the
+          earth's day/night adapts to it - and an orbiting cratered moon. */}
       <Sun position={[sunVec[0] * 4.7, sunVec[1] * 4.7, sunVec[2] * 4.7]} texture={textures.sun} />
       <Moon texture={textures.moon} />
 
@@ -558,7 +547,7 @@ function LiveEarth({ compact }: { compact: boolean }) {
         <primitive object={earthMaterial} attach="material" />
       </mesh>
 
-      {/* Graticule — a clean lat/long grid for the "data globe" look. */}
+      {/* Graticule - a clean lat/long grid for the "data globe" look. */}
       <mesh scale={1.003}>
         <sphereGeometry args={[1, 36, 18]} />
         <meshBasicMaterial color="#7e93b4" wireframe transparent opacity={0.055} depthWrite={false} />
@@ -580,12 +569,15 @@ function LiveEarth({ compact }: { compact: boolean }) {
       {(compact ? satellites.slice(0, 6) : satellites).map((satellite, index) => (
         <Satellite key={index} {...satellite} />
       ))}
+
+      <HopeSatellite bodyRef={hopeBodyRef} onActivate={onHopeActivate} onHover={onHopeHover} />
     </group>
   );
 }
 
-function CameraParallax() {
+function CameraParallax({ paused }: { paused: boolean }) {
   useFrame((state) => {
+    if (paused) return;
     state.camera.position.x += (state.pointer.x * 0.38 - state.camera.position.x) * 0.04;
     state.camera.position.y += (state.pointer.y * 0.26 - state.camera.position.y) * 0.04;
     state.camera.lookAt(0, 0, 0);
@@ -593,27 +585,166 @@ function CameraParallax() {
   return null;
 }
 
+/** The HOPE CubeSat — a distinct amber asset with a target reticle; clicking it launches the case study. */
+function HopeSatellite({
+  bodyRef,
+  onActivate,
+  onHover,
+}: {
+  bodyRef: React.RefObject<Group | null>;
+  onActivate: () => void;
+  onHover: (v: boolean) => void;
+}) {
+  const orbitRef = useRef<Group>(null);
+  const reticleRef = useRef<Group>(null);
+  const downRef = useRef<{ x: number; y: number } | null>(null);
+  const radius = 1.34;
+
+  useFrame((state) => {
+    if (orbitRef.current) orbitRef.current.rotation.y = state.clock.elapsedTime * 0.16 + 2.1;
+    if (reticleRef.current) reticleRef.current.rotation.z = state.clock.elapsedTime * 0.6;
+  });
+
+  const ticks = [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2];
+
+  return (
+    <group rotation={[0.36, 0.2, 0.05]}>
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[radius, 0.0012, 6, 128]} />
+        <meshBasicMaterial color="#f6a23c" transparent opacity={0.14} blending={AdditiveBlending} depthWrite={false} />
+      </mesh>
+      <group ref={orbitRef}>
+        <group ref={bodyRef} position={[radius, 0, 0]} scale={1.5}>
+          {/* invisible larger hit area for easy click/tap. We handle pointer
+              down/up with a small move threshold instead of onClick: the globe's
+              drag handler + the satellite's own orbit motion would otherwise
+              steal the click (sat slides out from under the cursor). */}
+          <mesh
+            onPointerDown={(event) => {
+              event.stopPropagation();
+              downRef.current = { x: event.clientX, y: event.clientY };
+            }}
+            onPointerUp={(event) => {
+              event.stopPropagation();
+              const start = downRef.current;
+              downRef.current = null;
+              if (!start) return;
+              const moved = Math.hypot(event.clientX - start.x, event.clientY - start.y);
+              if (moved < 8) onActivate();
+            }}
+            onPointerOver={(event) => {
+              event.stopPropagation();
+              onHover(true);
+              document.body.style.cursor = "pointer";
+            }}
+            onPointerOut={() => {
+              onHover(false);
+              document.body.style.cursor = "";
+            }}
+          >
+            <sphereGeometry args={[0.16, 16, 16]} />
+            <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+          </mesh>
+          {/* solar panels */}
+          <mesh position={[-0.055, 0, 0]}>
+            <boxGeometry args={[0.06, 0.003, 0.024]} />
+            <meshBasicMaterial color="#2a5c8a" />
+          </mesh>
+          <mesh position={[0.055, 0, 0]}>
+            <boxGeometry args={[0.06, 0.003, 0.024]} />
+            <meshBasicMaterial color="#2a5c8a" />
+          </mesh>
+          {/* amber body + glow */}
+          <mesh>
+            <boxGeometry args={[0.02, 0.02, 0.024]} />
+            <meshBasicMaterial color="#ffd9a8" />
+          </mesh>
+          <mesh>
+            <sphereGeometry args={[0.032, 12, 12]} />
+            <meshBasicMaterial color="#f6a23c" transparent opacity={0.42} blending={AdditiveBlending} depthWrite={false} />
+          </mesh>
+          {/* spinning target reticle */}
+          <group ref={reticleRef}>
+            <mesh>
+              <torusGeometry args={[0.052, 0.0016, 6, 48]} />
+              <meshBasicMaterial color="#f6a23c" transparent opacity={0.85} blending={AdditiveBlending} depthWrite={false} />
+            </mesh>
+            {ticks.map((angle, index) => (
+              <mesh key={index} position={[Math.cos(angle) * 0.06, Math.sin(angle) * 0.06, 0]} rotation={[0, 0, angle]}>
+                <boxGeometry args={[0.014, 0.0018, 0.0018]} />
+                <meshBasicMaterial color="#f6a23c" transparent opacity={0.85} blending={AdditiveBlending} depthWrite={false} />
+              </mesh>
+            ))}
+          </group>
+        </group>
+      </group>
+    </group>
+  );
+}
+
+/** When active, dollies the camera toward the HOPE satellite (it keeps orbiting) for the launch zoom. */
+function LaunchDolly({ active, targetRef }: { active: boolean; targetRef: React.RefObject<Group | null> }) {
+  const target = useMemo(() => new Vector3(), []);
+  const dir = useMemo(() => new Vector3(), []);
+  const desired = useMemo(() => new Vector3(), []);
+  const prog = useRef(0);
+
+  useFrame((state, delta) => {
+    if (!active) {
+      prog.current = 0;
+      return;
+    }
+    if (!targetRef.current) return;
+    // accelerate into the asset (ease-in) and push closer as we go — reads as a launch
+    prog.current = Math.min(1, prog.current + delta / 1.6);
+    const p = prog.current * prog.current;
+    targetRef.current.getWorldPosition(target);
+    dir.copy(target).sub(state.camera.position).normalize();
+    const standoff = 0.46 - 0.4 * p; // 0.46 → 0.06: dives right up to the sat
+    desired.copy(target).sub(dir.multiplyScalar(standoff));
+    state.camera.position.lerp(desired, 0.04 + 0.26 * p);
+    state.camera.lookAt(target);
+  });
+  return null;
+}
+
 function OrbitScene({
   compact,
   frameloop,
+  launching,
+  dpr,
+  hopeBodyRef,
+  onHopeActivate,
+  onHopeHover,
 }: {
   compact: boolean;
   frameloop: "always" | "demand";
+  launching: boolean;
+  dpr: number;
+  hopeBodyRef: React.RefObject<Group | null>;
+  onHopeActivate: () => void;
+  onHopeHover: (v: boolean) => void;
 }) {
   return (
     <Canvas
       frameloop={frameloop}
       camera={{ position: [-0.7, 0.1, 4.6], fov: 40 }}
-      dpr={compact ? [1, 1] : [1, 1.6]}
+      dpr={dpr}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
     >
-      {/* Near-zero ambient so the cloud layer is only lit by the sun — clouds
+      {/* Near-zero ambient so the cloud layer is only lit by the sun - clouds
           show on the day side and correctly vanish into the night side. */}
       <ambientLight intensity={0.02} />
-      {!compact ? <CameraParallax /> : null}
+      {!compact ? <CameraParallax paused={launching} /> : null}
+      <LaunchDolly active={launching} targetRef={hopeBodyRef} />
       <StarField compact={compact} />
-      {!compact ? [0, 1, 2, 3, 4, 5, 6].map((i) => <Meteor key={i} seed={i * 97 + 5} />) : null}
-      <LiveEarth compact={compact} />
+      {!compact ? [0, 1, 2, 3].map((i) => <Meteor key={i} seed={i * 97 + 5} />) : null}
+      <LiveEarth
+        compact={compact}
+        hopeBodyRef={hopeBodyRef}
+        onHopeActivate={onHopeActivate}
+        onHopeHover={onHopeHover}
+      />
       {!compact ? (
         <EffectComposer>
           <Bloom
@@ -641,9 +772,12 @@ function HeroSunBadge() {
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
-    setNow(new Date());
+    const initial = window.setTimeout(() => setNow(new Date()), 0);
     const interval = window.setInterval(() => setNow(new Date()), 30000);
-    return () => window.clearInterval(interval);
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(interval);
+    };
   }, []);
 
   const info = useMemo(() => {
@@ -663,19 +797,19 @@ function HeroSunBadge() {
   }, [now]);
 
   return (
-    <a href="/world" className="hero-live" aria-label="See the live sky on the World page">
+    <Link href="/world" className="hero-live" aria-label="See the live sky on the World page">
       <span className="hero-live-dot" aria-hidden="true" />
-      <span className="hero-live-label">Live · Berkeley, CA</span>
+      <span className="hero-live-label">Live - Berkeley, CA</span>
       {info ? (
         <span className="hero-live-state">
           {info.isDay ? <SunMedium size={13} /> : <MoonStar size={13} />}
-          {info.isDay ? "Daytime" : "Night"} · {info.time}
+          {info.isDay ? "Daytime" : "Night"} - {info.time}
         </span>
       ) : (
-        <span className="hero-live-state">Loading sky…</span>
+        <span className="hero-live-state">Loading sky...</span>
       )}
       <ArrowUpRight size={13} className="opacity-60" />
-    </a>
+    </Link>
   );
 }
 
@@ -691,12 +825,28 @@ export function SpaceHero() {
 
   const heroRef = useRef<HTMLElement>(null);
   const [inView, setInView] = useState(true);
-  const [compact, setCompact] = useState(false);
+  const [dpr, setDpr] = useState(1.3);
+  const [compact, setCompact] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches,
+  );
+
+  // Cap the render buffer to a fixed pixel budget so the hero stays smooth on
+  // large / high-DPI (4K) displays instead of rendering a giant target.
+  useEffect(() => {
+    const calc = () => {
+      const w = window.innerWidth || 1920;
+      const budget = 2300;
+      const cap = Math.min(window.devicePixelRatio || 1, 1.5);
+      setDpr(Math.max(0.75, Math.min(cap, budget / w)));
+    };
+    calc();
+    window.addEventListener("resize", calc);
+    return () => window.removeEventListener("resize", calc);
+  }, []);
 
   useEffect(() => {
     const query = window.matchMedia("(max-width: 768px)");
     const update = () => setCompact(query.matches);
-    update();
     query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);
   }, []);
@@ -713,10 +863,57 @@ export function SpaceHero() {
     return () => observer.disconnect();
   }, []);
 
-  const frameloop: "always" | "demand" = !reduceMotion && inView ? "always" : "demand";
+  const router = useRouter();
+  const hopeBodyRef = useRef<Group>(null);
+  const launchTimers = useRef<number[]>([]);
+  const [phase, setPhase] = useState<"idle" | "zoom" | "warp">("idle");
+  const [hopeHover, setHopeHover] = useState(false);
+
+  useEffect(() => {
+    router.prefetch?.("/projects/cubesat-telemetry-pcb");
+    // warm the heavy assets the case study needs (PCB model + hi-res clouds) so
+    // they're cached and ready by the time the launch transition lands.
+    const links = ["/pcb/hope_PCB_opt.glb", "/earth/earth_clouds_hi.png"].map((href) => {
+      const link = document.createElement("link");
+      link.rel = "prefetch";
+      link.as = "fetch";
+      link.href = href;
+      link.crossOrigin = "anonymous";
+      document.head.appendChild(link);
+      return link;
+    });
+    const timers = launchTimers.current;
+    return () => {
+      timers.forEach((id) => window.clearTimeout(id));
+      links.forEach((l) => l.remove());
+    };
+  }, [router]);
+
+  const launch = () => {
+    if (phase !== "idle") return;
+    if (reduceMotion) {
+      router.push("/projects/cubesat-telemetry-pcb");
+      return;
+    }
+    setPhase("zoom");
+    launchTimers.current.push(
+      window.setTimeout(() => setPhase("warp"), 1300),
+      window.setTimeout(() => {
+        try {
+          sessionStorage.setItem("hope:arrival", "1");
+        } catch {
+          /* sessionStorage may be unavailable */
+        }
+        router.push("/projects/cubesat-telemetry-pcb?from=orbit");
+      }, 1760),
+    );
+  };
+
+  const frameloop: "always" | "demand" =
+    phase !== "idle" || (!reduceMotion && inView) ? "always" : "demand";
 
   return (
-    <section ref={heroRef} className="hero relative flex min-h-screen items-start overflow-hidden pt-20 pb-16 sm:pt-24">
+    <section ref={heroRef} className="hero relative flex min-h-[92svh] items-start overflow-hidden pt-16 pb-12 sm:min-h-screen sm:pt-24 sm:pb-16">
       <motion.div
         aria-hidden="true"
         className="hero-canvas absolute inset-0"
@@ -724,13 +921,28 @@ export function SpaceHero() {
       >
         <div className="hero-canvas-grade absolute inset-0 cursor-grab active:cursor-grabbing">
           <CanvasErrorBoundary label="space hero">
-            <OrbitScene compact={compact} frameloop={frameloop} />
+            <OrbitScene
+              compact={compact}
+              frameloop={frameloop}
+              launching={phase !== "idle"}
+              dpr={compact ? 1 : dpr}
+              hopeBodyRef={hopeBodyRef}
+              onHopeActivate={launch}
+              onHopeHover={setHopeHover}
+            />
           </CanvasErrorBoundary>
         </div>
       </motion.div>
       <div className="hero-veil pointer-events-none absolute inset-0" />
       <div className="hero-blur-strip" />
       <div className="hero-base pointer-events-none absolute inset-x-0 bottom-0 h-64" />
+      {hopeHover && phase === "idle" ? (
+        <div className="hope-hint" aria-hidden="true">
+          <Crosshair size={13} />
+          HOPE · CubeSat asset — click to open
+        </div>
+      ) : null}
+      {phase !== "idle" ? <div className={`hero-warp hero-warp-${phase}`} aria-hidden="true" /> : null}
 
       <div className="hero-shell relative z-10 w-full">
         <motion.div
@@ -746,7 +958,7 @@ export function SpaceHero() {
             transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="kicker mb-7"
           >
-            UC Berkeley · Computer Science + Data Science
+            Security / Hardware / AI
           </motion.p>
           <h1 className="display text-[clamp(2.4rem,8.5vw,6.5rem)] text-white">
             <span aria-label={profile.name} className="hero-name">
@@ -762,7 +974,7 @@ export function SpaceHero() {
                     ease: [0.22, 1, 0.36, 1],
                   }}
                 >
-                  {character === " " ? " " : character}
+                  {character === " " ? " " : character}
                 </motion.span>
               ))}
             </span>
@@ -775,6 +987,15 @@ export function SpaceHero() {
           >
             {profile.intro}
           </motion.p>
+          <motion.p
+            initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+            animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+            transition={{ delay: 0.52, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-4 max-w-xl text-sm font-medium leading-relaxed text-white/85 sm:text-base"
+          >
+            Former NSA software intern. Built a secure telemetry PCB, a malicious-datastore file
+            system, and GPU-accelerated simulation work.
+          </motion.p>
           <motion.div
             initial={reduceMotion ? false : { opacity: 0, y: 14 }}
             animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
@@ -782,10 +1003,10 @@ export function SpaceHero() {
             className="mt-9 flex flex-col gap-3 sm:flex-row"
           >
             <Magnetic>
-              <a className="btn btn-primary" href="/projects">
+              <Link className="btn btn-primary" href="/projects">
                 View projects
                 <ArrowUpRight size={18} />
-              </a>
+              </Link>
             </Magnetic>
             <Magnetic>
               <a className="btn btn-ghost" href={profile.resumeHref} target="_blank" rel="noreferrer">
@@ -800,6 +1021,18 @@ export function SpaceHero() {
               </a>
             </Magnetic>
           </motion.div>
+          <motion.button
+            type="button"
+            onClick={launch}
+            className="hero-mission-cue mt-6"
+            initial={reduceMotion ? false : { opacity: 0 }}
+            animate={reduceMotion ? undefined : { opacity: 1 }}
+            transition={{ delay: 0.78, duration: 0.5 }}
+          >
+            <span className="hero-mission-dot" aria-hidden="true" />
+            Click the amber satellite to enter Operation HOPE
+            <ArrowUpRight size={14} />
+          </motion.button>
           <motion.div
             initial={reduceMotion ? false : { opacity: 0 }}
             animate={reduceMotion ? undefined : { opacity: 1 }}

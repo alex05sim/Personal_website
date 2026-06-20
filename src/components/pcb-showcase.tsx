@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react-hooks/immutability */
+
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { useMotionValueEvent, useReducedMotion, useScroll } from "motion/react";
 import {
@@ -43,6 +45,15 @@ import { PcbCrypto } from "./pcb-crypto";
 
 const MODEL = "/pcb/hope_PCB_opt.glb";
 
+// Warm the model cache as soon as this chunk loads (project-page mount) instead of
+// waiting for the showcase to scroll into view — so it's downloaded + parsed and
+// renders instantly by the time the user reaches it.
+if (typeof window !== "undefined") {
+  useLoader.preload(GLTFLoader, MODEL, (loader) => {
+    (loader as GLTFLoader).setMeshoptDecoder(MeshoptDecoder);
+  });
+}
+
 // shared, mutable download-progress signal (read by the DOM loading overlay)
 const pcbLoad = { loaded: 0, total: 0 };
 
@@ -51,7 +62,7 @@ const sstep = (a: number, b: number, x: number) => {
   return t * t * (3 - 2 * t);
 };
 const ramp = (a: number, b: number, x: number) => Math.max(0, Math.min(1, (x - a) / (b - a)));
-// ease-out-back: overshoots slightly then settles — parts "click" into place
+// ease-out-back: overshoots slightly then settles - parts "click" into place
 const easeOutBack = (t: number) => {
   const c1 = 1.70158;
   const u = t - 1;
@@ -60,7 +71,7 @@ const easeOutBack = (t: number) => {
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const lerp = MathUtils.lerp;
 
-// Top-level node-name groups (GLTFLoader sanitises spaces → underscores)
+// Top-level node-name groups (GLTFLoader sanitises spaces -> underscores)
 const LID = ["Enclosure_clear_lid", "Standoffs_for_enclosre"];
 const BACK = ["Back_Enclosure", "Solar", "Hinges", "Antenna"];
 function groupOf(name: string): "lid" | "back" | "pcb" {
@@ -89,8 +100,8 @@ const CALLOUTS: Callout[] = [
     id: "compute",
     label: "Compute",
     sub: "ESP32-S3",
-    spec: "ESP32-S3 · AT25SF128A QSPI flash · USB-C",
-    desc: "A dual-core ESP32-S3 with external AT25SF128A flash runs the telemetry loop — polling the sensors over I²C/SPI/UART, framing each packet, and handing it to the secure element to be signed. BOOT/RESET buttons and a USB-C bridge on the left edge handle flashing and debug.",
+    spec: "ESP32-S3 - AT25SF128A QSPI flash - USB-C",
+    desc: "A dual-core ESP32-S3 with external AT25SF128A flash runs the telemetry loop - polling the sensors over I²C/SPI/UART, framing each packet, and handing it to the secure element to be signed. BOOT/RESET buttons and a USB-C bridge on the left edge handle flashing and debug.",
     color: "#f6a23c",
     colorRgb: "246, 162, 60",
     a: 0.02,
@@ -100,7 +111,7 @@ const CALLOUTS: Callout[] = [
     id: "gnss",
     label: "GNSS",
     sub: "u-blox MAX-M10S",
-    spec: "u-blox MAX-M10S · RF front end · backup supercap",
+    spec: "u-blox MAX-M10S - RF front end - backup supercap",
     desc: "A u-blox MAX-M10S receiver with its own RF front end and antenna connector fixes position and time. A backup supercapacitor holds the almanac between power cycles so the next fix comes faster.",
     color: "#6ea0ff",
     colorRgb: "110, 160, 255",
@@ -110,9 +121,9 @@ const CALLOUTS: Callout[] = [
   {
     id: "lora",
     label: "LoRa",
-    sub: "SX1262 · 915 MHz",
-    spec: "Semtech SX1262 · 915 MHz · matching net · u.FL",
-    desc: "A Semtech SX1262 LoRa transceiver at 915 MHz (SF7 / 125 kHz / 14 dBm) with its own matching network and u.FL antenna. It trades bandwidth for range and power, giving the board a downlink to a ground station kilometres away — the primary telemetry path.",
+    sub: "SX1262 - 915 MHz",
+    spec: "Semtech SX1262 - 915 MHz - matching net - u.FL",
+    desc: "A Semtech SX1262 LoRa transceiver at 915 MHz (SF7 / 125 kHz / 14 dBm) with its own matching network and u.FL antenna. It trades bandwidth for range and power, giving the board a downlink to a ground station kilometres away - the primary telemetry path.",
     color: "#ff6b6b",
     colorRgb: "255, 107, 107",
     a: 0.38,
@@ -121,9 +132,9 @@ const CALLOUTS: Callout[] = [
   {
     id: "sensors",
     label: "Sensors",
-    sub: "BME688 · BNO085 · RTC",
-    spec: "BME688 · BNO085 IMU · TMP117 · VEML7700 · LIS2MDL · DS3231",
-    desc: "A full housekeeping suite: a Bosch BME688 (temperature, humidity, pressure, gas), a BNO085 9-axis IMU and an LIS2MDL magnetometer for attitude, a TMP117 precision thermometer, a VEML7700 ambient-light sensor, and a DS3231 real-time clock to timestamp every frame — alongside per-rail current/voltage monitors for the board's own health.",
+    sub: "BME688 - BNO085 - RTC",
+    spec: "BME688 - BNO085 IMU - TMP117 - VEML7700 - LIS2MDL - DS3231",
+    desc: "A full housekeeping suite: a Bosch BME688 (temperature, humidity, pressure, gas), a BNO085 9-axis IMU and an LIS2MDL magnetometer for attitude, a TMP117 precision thermometer, a VEML7700 ambient-light sensor, and a DS3231 real-time clock to timestamp every frame - alongside per-rail current/voltage monitors for the board's own health.",
     color: "#2bd4ee",
     colorRgb: "43, 212, 238",
     a: 0.46,
@@ -133,7 +144,7 @@ const CALLOUTS: Callout[] = [
     id: "power",
     label: "Power",
     sub: "Solar + battery",
-    spec: "USB-C + solar · MCP73871 charger · TPS63070 · shunt monitors",
+    spec: "USB-C + solar - MCP73871 charger - TPS63070 - shunt monitors",
     desc: "USB-C and solar inputs feed an MCP73871 battery charger and a TPS63070 buck-boost rail, with load switches and shunt-based current monitors so the firmware can budget energy and ride out brownouts and patchy solar input.",
     color: "#7ee0a6",
     colorRgb: "126, 224, 166",
@@ -150,15 +161,15 @@ const SUBSYSTEMS: SubInfo[] = [
   {
     id: "security",
     label: "Security",
-    sub: "HMAC + replay · PQ",
-    spec: "HMAC-SHA256 auth · replay counter · ML-KEM/ML-DSA (liboqs)",
-    desc: "Every packet carries an HMAC-SHA256 tag and a strictly-increasing per-session counter, so the ground station rejects forged or replayed frames. Sessions are set up with a post-quantum ML-KEM/ML-DSA handshake (liboqs-gated). An ATECC608A secure element sits on the board for hardware key storage — firmware integration is on the roadmap.",
+    sub: "HMAC + replay - PQ",
+    spec: "HMAC-SHA256 auth - replay counter - ML-KEM/ML-DSA (liboqs)",
+    desc: "Every packet carries an HMAC-SHA256 tag and a strictly-increasing per-session counter, so the ground station rejects forged or replayed frames. Sessions are set up with a post-quantum ML-KEM/ML-DSA handshake (liboqs-gated). An ATECC608A secure element sits on the board for hardware key storage - firmware integration is on the roadmap.",
     color: "#b292ff",
     colorRgb: "178, 146, 255",
   },
 ];
 
-// headline metrics — count up on scroll. `value` is animated; `static` renders as-is.
+// headline metrics - count up on scroll. `value` is animated; `static` renders as-is.
 // Numbers verified from the KiCad project (Hope_project.kicad_pcb / .csv) + Alex's build cost.
 type Stat = {
   value?: number;
@@ -170,44 +181,44 @@ type Stat = {
   colorRgb: string;
 };
 const STATS: Stat[] = [
-  { value: 140, prefix: "~$", label: "Build cost · 1-off", colorRgb: "246, 162, 60" },
+  { value: 140, prefix: "~$", label: "Build cost - 1-off", colorRgb: "246, 162, 60" },
   { value: 242, label: "Components placed", colorRgb: "110, 160, 255" },
   { value: 2, suffix: "-layer", label: "PCB stackup", colorRgb: "126, 224, 166" },
-  { value: 203, suffix: " mm", label: "Board · square", colorRgb: "255, 107, 107" },
+  { value: 203, suffix: " mm", label: "Board - square", colorRgb: "255, 107, 107" },
   { value: 915, suffix: " MHz", label: "SX1262 LoRa", colorRgb: "43, 212, 238" },
   { value: 128, suffix: " Mb", label: "QSPI flash", colorRgb: "178, 146, 255" },
   { static: "9-axis", label: "BNO085 IMU", colorRgb: "246, 162, 60" },
   { static: "ESP32-S3", label: "WROOM-1 MCU", colorRgb: "110, 160, 255" },
 ];
 
-// quick-scan spec sheet — parts confirmed against the project BOM (no fabricated numbers)
+// quick-scan spec sheet - parts confirmed against the project BOM (no fabricated numbers)
 const SPECS: { k: string; v: string }[] = [
   { k: "MCU", v: "ESP32-S3-WROOM-1" },
-  { k: "Flash", v: "AT25SF128A · 128 Mb" },
-  { k: "Radio", v: "Semtech SX1262 · 915 MHz" },
+  { k: "Flash", v: "AT25SF128A - 128 Mb" },
+  { k: "Radio", v: "Semtech SX1262 - 915 MHz" },
   { k: "GNSS", v: "u-blox MAX-M10S" },
-  { k: "Sensors", v: "BME688 · BNO085 · TMP117 · VEML7700 · LIS2MDL · DS3231" },
-  { k: "Power", v: "USB-C + solar · MCP73871 · TPS63070" },
-  { k: "Security", v: "HMAC-SHA256 · replay · ML-KEM/ML-DSA" },
-  { k: "PCB", v: "2-layer · 203 mm sq · 242 parts" },
-  { k: "Build", v: "~$140 · hand-soldered" },
+  { k: "Sensors", v: "BME688 - BNO085 - TMP117 - VEML7700 - LIS2MDL - DS3231" },
+  { k: "Power", v: "USB-C + solar - MCP73871 - TPS63070" },
+  { k: "Security", v: "HMAC-SHA256 - replay - ML-KEM/ML-DSA" },
+  { k: "PCB", v: "2-layer - 203 mm sq - 242 parts" },
+  { k: "Build", v: "~$140 - hand-soldered" },
 ];
 
 // end-to-end design process (all done by Alex)
 const PROCESS: { n: string; t: string; d: string }[] = [
-  { n: "01", t: "Schematic", d: "Captured the design in KiCad — MCU, RF chains, power tree, and the secure element." },
+  { n: "01", t: "Schematic", d: "Captured the design in KiCad - MCU, RF chains, power tree, and the secure element." },
   { n: "02", t: "PCB layout", d: "Placed every footprint and routed every net by hand across the board." },
-  { n: "03", t: "Firmware", d: "Wrote the ESP-IDF firmware — sensor reads, HOPE packet framing, replay guard, SX1262 downlink." },
+  { n: "03", t: "Firmware", d: "Wrote the ESP-IDF firmware - sensor reads, HOPE packet framing, replay guard, SX1262 downlink." },
   { n: "04", t: "Assembly", d: "Hand-soldered the board and brought it up on the bench." },
 ];
 
-// the software half — ESP-IDF firmware + Python ground station (facts from Alex's repo README)
+// the software half - ESP-IDF firmware + Python ground station (facts from Alex's repo README)
 type SoftItem = { id: string; title: string; tag: string; desc: string; color: string; colorRgb: string };
 const SOFTWARE: SoftItem[] = [
   {
     id: "fw",
     title: "Firmware",
-    tag: "C · ESP-IDF 6.0.1",
+    tag: "C - ESP-IDF 6.0.1",
     desc: "FreeRTOS tasks drive the SX1262 LoRa radio and a UART GNSS parser that validates NMEA checksums and tracks fix age, HDOP, altitude, speed, course, and UTC.",
     color: "#f6a23c",
     colorRgb: "246, 162, 60",
@@ -215,7 +226,7 @@ const SOFTWARE: SoftItem[] = [
   {
     id: "gs",
     title: "Ground station",
-    tag: "Python · Master Control",
+    tag: "Python - Master Control",
     desc: "A browser + classic Tk dashboard adds, pairs, audits, and exports fleet nodes, with a hardware bring-up panel that checks links, GNSS quality, the command queue, and the replay guard.",
     color: "#6ea0ff",
     colorRgb: "110, 160, 255",
@@ -223,23 +234,23 @@ const SOFTWARE: SoftItem[] = [
   {
     id: "bridge",
     title: "RangePi bridge",
-    tag: "SX1262 ↔ USB serial",
-    desc: "A RangePi with a matching SX1262 relays packets over a simple serial contract — TX hex out, RX hex with RSSI/SNR back — so the dashboard talks to the board over real RF.",
+    tag: "SX1262 <-> USB serial",
+    desc: "A RangePi with a matching SX1262 relays packets over a simple serial contract - TX hex out, RX hex with RSSI/SNR back - so the dashboard talks to the board over real RF.",
     color: "#2bd4ee",
     colorRgb: "43, 212, 238",
   },
   {
     id: "transport",
     title: "Transports",
-    tag: "LoRa · Wi-Fi · auto",
-    desc: "The same packet bytes ride LoRa, Wi-Fi UDP, or an auto mode that falls back to Wi-Fi after repeated LoRa TX failures — switchable live from the console.",
+    tag: "LoRa - Wi-Fi - auto",
+    desc: "The same packet bytes ride LoRa, Wi-Fi UDP, or an auto mode that falls back to Wi-Fi after repeated LoRa TX failures - switchable live from the console.",
     color: "#7ee0a6",
     colorRgb: "126, 224, 166",
   },
   {
     id: "proto",
     title: "HOPE protocol",
-    tag: "6 types · replay-guarded",
+    tag: "6 types - replay-guarded",
     desc: "One versioned packet frame for telemetry, commands, ACKs, diagnostics, and lattice handshakes. Strictly-increasing per-session counters reject stale or duplicate packets; telemetry ships as a 12-byte v1 or 36-byte v2 payload.",
     color: "#ff6b6b",
     colorRgb: "255, 107, 107",
@@ -247,14 +258,14 @@ const SOFTWARE: SoftItem[] = [
   {
     id: "pq",
     title: "Post-quantum",
-    tag: "ML-KEM · ML-DSA",
+    tag: "ML-KEM - ML-DSA",
     desc: "A session-rotate handshake exchanges ML-KEM public keys and ML-DSA signatures (liboqs) to derive a fresh session. The ground station verifies; the ESP32 path is wired and liboqs-gated.",
     color: "#b292ff",
     colorRgb: "178, 146, 255",
   },
 ];
 
-// per-part disassembly descriptor (staggered tiers → punchier explosion)
+// per-part disassembly descriptor (staggered tiers -> punchier explosion)
 type Part = { node: Object3D; orig: Vector3; dir: Vector3; start: number; end: number; dist: number };
 
 // drag-to-rotate state, shared between the DOM canvas and the render loop
@@ -347,7 +358,7 @@ function PcbModel({
     const liftDir = new Vector3(mn === lidSz.x ? 1 : 0, mn === lidSz.y ? 1 : 0, mn === lidSz.z ? 1 : 0);
     if (liftDir.dot(new Vector3().subVectors(lidC, backC)) < 0) liftDir.negate();
 
-    // back panel slides along the in-plane lid→back axis (long axis of the open book)
+    // back panel slides along the in-plane lid->back axis (long axis of the open book)
     const backDir = new Vector3().subVectors(lidC, backC);
     backDir.setComponent(liftDir.x ? 0 : liftDir.y ? 1 : 2, 0);
     backDir.normalize();
@@ -368,13 +379,13 @@ function PcbModel({
       }
       const g = groupOf(nm);
       if (g === "lid") {
-        // standoffs follow, the clear lid floats highest — a tidy teardown
+        // standoffs follow, the clear lid floats highest - a tidy teardown
         const tier = /standoff/i.test(nm) ? 1 : 2;
         const dist = [1.3, 1.9, 2.5][tier];
         const start = 0.3 + tier * 0.05;
         parts.push({ node: child, orig, dir: liftDir, start, end: start + 0.3, dist });
       } else if (g === "back") {
-        // solar leads, the back enclosure shell trails — kept close so nothing flies off
+        // solar leads, the back enclosure shell trails - kept close so nothing flies off
         const lead = !/Back_Enclosure/i.test(nm);
         const start = 0.42 + (lead ? 0 : 0.06);
         parts.push({
@@ -389,7 +400,7 @@ function PcbModel({
         // give the batteries a small lift so the finale has some life
         parts.push({ node: child, orig, dir: liftDir, start: 0.5, end: 0.82, dist: 0.7 });
       } else {
-        // board layers / standoffs / screws stay put — this is the focus target
+        // board layers / standoffs / screws stay put - this is the focus target
         parts.push({ node: child, orig, dir: liftDir, start: 0, end: 0, dist: 0 });
       }
     }
@@ -412,11 +423,11 @@ function PcbModel({
         .addScaledVector(liftDir, 0.3),
     );
 
-    // orientation quaternions (robust — no Euler guessing)
+    // orientation quaternions (robust - no Euler guessing)
     const qHero = new Quaternion().setFromEuler(new Euler(-0.52, 0.55, 0));
     const qFocus = new Quaternion().setFromUnitVectors(liftDir, new Vector3(0, 0, 1));
 
-    // ── soft contact shadow (faked, parented to the rig so it tracks rotation) ──
+    // -- soft contact shadow (faked, parented to the rig so it tracks rotation) --
     const shadowTex = makeShadowTexture();
     const planeSpan = Math.max(envSz.x, envSz.y, envSz.z) * scaleK * 1.5;
     const shadow = new Mesh(
@@ -434,16 +445,16 @@ function PcbModel({
     shadow.position.copy(liftDir).multiplyScalar(-(Math.abs(halfLift) + 0.12));
     shadow.renderOrder = -1;
 
-    // ── materials / lighting polish ────────────────────────────────
+    // -- materials / lighting polish --------------------------------
     // soft studio reflections; Khronos PBR-Neutral tone mapping rolls highlights off
-    // gracefully (no clipped-white blowout, no over-saturated cyan) — product-render look.
+    // gracefully (no clipped-white blowout, no over-saturated cyan) - product-render look.
     const pmrem = new PMREMGenerator(gl);
     rootScene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
     rootScene.environmentIntensity = 0.58;
     gl.toneMapping = NeutralToneMapping;
     gl.toneMappingExposure = 0.74;
 
-    // ── product-render material palette (dark studio) ──────────────
+    // -- product-render material palette (dark studio) --------------
     // Replace the hero solids with a deliberate, cohesive palette; everything else keeps its
     // imported colour but is pushed to a SATIN finish (roughness up, reflections down) so no
     // panel clips to white under the lights. The board's silkscreen/copper/soldermask are
@@ -461,14 +472,14 @@ function PcbModel({
     };
     // the floating lid assembly is faded + hidden at the bird's-eye hand-off so it clears the board
     const fadeMats: { mesh: Mesh; mat: MeshStandardMaterial; base: number }[] = [];
-    // the flat soldermask layer — its projected screen rect sizes the layout overlay 1:1
+    // the flat soldermask layer - its projected screen rect sizes the layout overlay 1:1
     let rectMesh: Mesh | null = null;
-    // silkscreen materials — faded in for the finale so they don't float as dots during teardown
+    // silkscreen materials - faded in for the finale so they don't float as dots during teardown
     const silkMats: MeshStandardMaterial[] = [];
     // ONE shared anodized metal-black tone + finish for BOTH enclosure shells
     // (Component30 = front shell / board backing, Back_Enclosure = back shell) so they can never
     // diverge in colour again. Satin (not glossy) so the front shell stays a clean dark backing
-    // for the board→layout cross-fade. The clear glass lid is separate and stays clear.
+    // for the board->layout cross-fade. The clear glass lid is separate and stays clear.
     const ENC = 0x1c1e22;
     const encMat = () =>
       new MeshStandardMaterial({ color: ENC, metalness: 0.78, roughness: 0.55, envMapIntensity: 0.5 });
@@ -479,7 +490,7 @@ function PcbModel({
       const tn = topName(o);
 
       if (tn === "Enclosure_clear_lid") {
-        // genuinely clear glass lid (light tint) — independent of the black tray; tamed env
+        // genuinely clear glass lid (light tint) - independent of the black tray; tamed env
         const lidMat = coarse
           ? new MeshPhysicalMaterial({
               color: 0xc2d2e6,
@@ -505,10 +516,10 @@ function PcbModel({
             });
         apply(o, lidMat);
       } else if (tn === "Back_Enclosure") {
-        // back enclosure shell — identical metal-black material as the front shell (Component30)
+        // back enclosure shell - identical metal-black material as the front shell (Component30)
         apply(o, encMat());
       } else if (tn === "Solar") {
-        // deep solar-cell blue with a glassy clearcoat — pops against the black shells
+        // deep solar-cell blue with a glassy clearcoat - pops against the black shells
         apply(
           o,
           new MeshPhysicalMaterial({
@@ -524,22 +535,22 @@ function PcbModel({
         // muted gunmetal cells
         apply(o, new MeshStandardMaterial({ color: 0x43464c, metalness: 0.65, roughness: 0.52, envMapIntensity: 0.5 }));
       } else if (tn.includes("Standoffs_for_enclosre")) {
-        // lid standoffs — dark metal to match the black enclosure shells (no silver bits)
+        // lid standoffs - dark metal to match the black enclosure shells (no silver bits)
         apply(o, new MeshStandardMaterial({ color: 0x24272c, metalness: 0.8, roughness: 0.5, envMapIntensity: 0.5 }));
       } else if (tn.includes("Component30")) {
-        // FRONT enclosure shell (anodized aluminium body) — NOT the board. Same metal-black material
-        // as Back_Enclosure so the two shells match; doubles as the dark backing the board → layout
+        // FRONT enclosure shell (anodized aluminium body) - NOT the board. Same metal-black material
+        // as Back_Enclosure so the two shells match; doubles as the dark backing the board -> layout
         // cross-fade resolves over, so it stays satin (no glints) and keeps its non-fading role.
         apply(o, encMat());
       } else if (tn === "PCB_SolderMask") {
-        // dark soldermask overlay (subtle PCB-green undertone) — its flat outline sizes the layout
+        // dark soldermask overlay (subtle PCB-green undertone) - its flat outline sizes the layout
         apply(
           o,
           new MeshStandardMaterial({ color: 0x16231d, metalness: 0.0, roughness: 0.75, envMapIntensity: 0.25 }),
         );
         rectMesh = o;
       } else if (tn === "PCB_Silkscreen") {
-        // bright matte white silkscreen — faded IN for the finale (see silkMats); during the dark
+        // bright matte white silkscreen - faded IN for the finale (see silkMats); during the dark
         // teardown the tiny designators would otherwise read as floating "dots" on the near-black board
         const skm = new MeshStandardMaterial({
           color: 0xe9edf3,
@@ -558,7 +569,7 @@ function PcbModel({
           new MeshStandardMaterial({ color: 0xb98a4e, metalness: 0.7, roughness: 0.45, envMapIntensity: 0.5 }),
         );
       } else {
-        // populated components (PCB_Body), standoffs — keep colour, satin
+        // populated components (PCB_Body), standoffs - keep colour, satin
         const mat = o.material;
         if (Array.isArray(mat)) mat.forEach(tame);
         else if (mat) tame(mat);
@@ -567,7 +578,7 @@ function PcbModel({
 
     // Everything that isn't the bare PCB is enclosure: hard-hide the small debris at mesh level
     // (screws/hinges/antenna), and collect the rest (lid, tray, solar, batteries, standoffs) so the
-    // whole enclosure dissolves at the hand-off — leaving only the board to cross-fade into its layout.
+    // whole enclosure dissolves at the hand-off - leaving only the board to cross-fade into its layout.
     const isBoard = (n: string) =>
       n.includes("Component30") ||
       n === "PCB_SolderMask" ||
@@ -580,7 +591,7 @@ function PcbModel({
       const tn = topName(o);
       if (isBoard(tn)) return;
       if (/screw|hinge|antenna|batter/i.test(tn)) {
-        o.visible = false; // debris/batteries — hidden for good (read as stray "stadium" cylinders)
+        o.visible = false; // debris/batteries - hidden for good (read as stray "stadium" cylinders)
         return;
       }
       const mats = Array.isArray(o.material) ? o.material : [o.material];
@@ -623,10 +634,10 @@ function PcbModel({
     const focus = sstep(0.5, 1, p);
 
     // orientation: gentle idle sway near the top until the user grabs it, then
-    // slerp hero → chip-side-facing-camera as you scroll
+    // slerp hero -> chip-side-facing-camera as you scroll
     const drag = dragRef.current;
-    // continuous 360° idle auto-orbit near the top — keeps spinning until you grab it (drag) or
-    // scroll in (idle→0 freezes the spin; the slerp to qFocus then takes over for the finale)
+    // continuous 360 deg idle auto-orbit near the top - keeps spinning until you grab it (drag) or
+    // scroll in (idle->0 freezes the spin; the slerp to qFocus then takes over for the finale)
     const idle = drag?.dragged ? 0 : 1 - sstep(0, 0.3, p);
     spin.current += delta * 0.6 * idle;
     const t = state.clock.elapsedTime;
@@ -649,7 +660,7 @@ function PcbModel({
       }
     }
 
-    // staggered explode — each part has its own window + a small settle overshoot
+    // staggered explode - each part has its own window + a small settle overshoot
     for (const part of parts) {
       if (part.dist === 0) {
         part.node.position.copy(part.orig);
@@ -675,7 +686,7 @@ function PcbModel({
     const silkO = reduced ? 0 : sstep(0.52, 0.7, p);
     for (const sm of silkMats) sm.opacity = silkO;
 
-    // camera: frame whole assembly → 3/4 finale → straighten DEAD-ON for the layout hand-off
+    // camera: frame whole assembly -> 3/4 finale -> straighten DEAD-ON for the layout hand-off
     root.updateMatrixWorld(true);
     target.copy(pcbCenter).applyMatrix4(root.matrixWorld).multiplyScalar(focus);
     // drop the y-lift to 0 as we straighten so the board faces the camera flat (no trapezoid)
@@ -684,8 +695,8 @@ function PcbModel({
     camOff.set(0, camY, 1).normalize().multiplyScalar(dist);
     camera.position.copy(target).add(camOff);
     // pan the board to the RIGHT during hero/teardown so it clears the left caption column,
-    // easing back to centred by the finale (focus→1) so the morph/callouts stay aligned.
-    // Only on wide LANDSCAPE viewports — on narrow/portrait the caption drops to the bottom (CSS)
+    // easing back to centred by the finale (focus->1) so the morph/callouts stay aligned.
+    // Only on wide LANDSCAPE viewports - on narrow/portrait the caption drops to the bottom (CSS)
     // and the board stays centred, so a pan would just shove it off-screen.
     const wide = !coarse && size.width >= 1280 && size.width >= size.height * 1.3;
     const panX = wide ? (1 - focus) * -1.7 : 0;
@@ -693,7 +704,7 @@ function PcbModel({
     target.x += panX;
     camera.lookAt(target);
 
-    // callouts: project anchors → DOM, reveal across the finale
+    // callouts: project anchors -> DOM, reveal across the finale
     const els = calloutEls.current;
     if (els) {
       for (let i = 0; i < anchors.length; i++) {
@@ -704,7 +715,7 @@ function PcbModel({
         const onScreen = proj.z < 1 && appear > 0.01;
         const x = (proj.x * 0.5 + 0.5) * size.width;
         const y = (-proj.y * 0.5 + 0.5) * size.height;
-        // keep callouts through the morph — they're projected from the anchors, which stay locked to
+        // keep callouts through the morph - they're projected from the anchors, which stay locked to
         // the layout's rect, so they carry onto the flat layout and remain tappable
         el.style.opacity = onScreen ? String(appear) : "0";
         el.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
@@ -727,7 +738,7 @@ function PcbModel({
     }
 
     // morph overlay: lock the flat layout EXACTLY onto the board's projected rectangle so the
-    // shared silkscreen never moves — the cross-dissolve then reads as the board resolving, not a swap
+    // shared silkscreen never moves - the cross-dissolve then reads as the board resolving, not a swap
     const morph = morphEls.current;
     if (morph) {
       const layout = morph[0];
@@ -770,7 +781,7 @@ function PcbModel({
   );
 }
 
-// radial gradient → a soft round contact shadow, drawn once on a canvas texture
+// radial gradient -> a soft round contact shadow, drawn once on a canvas texture
 function makeShadowTexture() {
   const size = 256;
   const canvas = document.createElement("canvas");
@@ -793,6 +804,8 @@ function Scene({
   progressRef,
   reduced,
   coarse,
+  frameloop,
+  dpr,
   dragRef,
   calloutEls,
   captionEls,
@@ -802,6 +815,8 @@ function Scene({
   progressRef: RefObject<number>;
   reduced: boolean;
   coarse: boolean;
+  frameloop: "always" | "demand";
+  dpr: number;
   dragRef: RefObject<DragState>;
   calloutEls: RefObject<(HTMLElement | null)[]>;
   captionEls: RefObject<(HTMLElement | null)[]>;
@@ -812,8 +827,9 @@ function Scene({
   // "debris" dots. Clean materials + tone mapping carry the look instead.
   return (
     <Canvas
+      frameloop={frameloop}
       camera={{ position: [0, 2, 8.2], fov: 38 }}
-      dpr={coarse ? [1, 1.4] : [1, 1.8]}
+      dpr={dpr}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
     >
       <ambientLight intensity={0.14} />
@@ -856,7 +872,7 @@ function PcbLoader() {
       <div className="pcb-loader-bar">
         <span style={{ width: `${pct}%` }} />
       </div>
-      <p className="kicker pcb-loader-label">Assembling board… {pct}%</p>
+      <p className="kicker pcb-loader-label">Assembling board... {pct}%</p>
     </div>
   );
 }
@@ -881,7 +897,23 @@ export function PcbShowcase() {
   const [inView, setInView] = useState(false);
   const [coarse, setCoarse] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [dpr, setDpr] = useState(1.3);
+
+  // Cap the PCB render buffer so the first frame (mount/upload) is fast — a full
+  // 4K buffer made the model slow to appear on scroll.
+  useEffect(() => {
+    const calc = () => {
+      const w = window.innerWidth || 1920;
+      const budget = 2400;
+      const cap = Math.min(window.devicePixelRatio || 1, 1.6);
+      setDpr(Math.max(0.85, Math.min(cap, budget / w)));
+    };
+    calc();
+    window.addEventListener("resize", calc);
+    return () => window.removeEventListener("resize", calc);
+  }, []);
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -895,11 +927,22 @@ export function PcbShowcase() {
     const el = sectionRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), {
-      rootMargin: "300px",
+      rootMargin: "800px", // mount earlier so the (preloaded) model is ready before it's seen
     });
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
+
+  // Only show the loader if the model genuinely takes a moment — for the common
+  // preloaded/cached case it resolves instantly and the loader never flashes.
+  useEffect(() => {
+    if (!inView || loaded) {
+      setShowLoader(false);
+      return;
+    }
+    const id = window.setTimeout(() => setShowLoader(true), 300);
+    return () => window.clearTimeout(id);
+  }, [inView, loaded]);
 
   useEffect(() => {
     const mq = window.matchMedia("(pointer: coarse), (max-width: 1023px)");
@@ -909,7 +952,7 @@ export function PcbShowcase() {
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  // drag-to-orbit: horizontal = full 360° yaw; vertical = pitch on fine pointers only
+  // drag-to-orbit: horizontal = full 360 deg yaw; vertical = pitch on fine pointers only
   // (touch-action: pan-y keeps vertical gestures scrolling the page on mobile)
   const drag = dragRef.current;
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -925,7 +968,7 @@ export function PcbShowcase() {
     const dy = e.clientY - drag.lastY;
     drag.lastX = e.clientX;
     drag.lastY = e.clientY;
-    // yaw spins freely (no clamp → full orbit); pitch limited so it never flips fully over
+    // yaw spins freely (no clamp -> full orbit); pitch limited so it never flips fully over
     drag.targetYaw += dx * 0.007;
     if (!coarse) drag.targetPitch = clamp(drag.targetPitch - dy * 0.006, -1.35, 1.35);
   };
@@ -948,12 +991,17 @@ export function PcbShowcase() {
           onPointerUp={reduced ? undefined : onPointerUp}
           onPointerCancel={reduced ? undefined : onPointerUp}
         >
+          {/* mounted just-in-time (rootMargin gives lead) so we never keep a second
+              heavy WebGL canvas alive next to the intro — that tanks FPS at 4K. The
+              GLB is preloaded so the download is already done when this mounts. */}
           {inView ? (
             <CanvasErrorBoundary label="pcb showcase">
               <Scene
                 progressRef={progressRef}
                 reduced={reduced}
                 coarse={coarse}
+                frameloop="always"
+                dpr={dpr}
                 dragRef={dragRef}
                 calloutEls={calloutEls}
                 captionEls={captionEls}
@@ -962,10 +1010,10 @@ export function PcbShowcase() {
               />
             </CanvasErrorBoundary>
           ) : null}
-          {inView && !loaded ? <PcbLoader /> : null}
+          {showLoader ? <PcbLoader /> : null}
         </div>
 
-        {/* projected component callouts — tap/click a point to populate its detail */}
+        {/* projected component callouts - tap/click a point to populate its detail */}
         <div className="pcb-callouts">
           {CALLOUTS.map((c, i) => (
             <button
@@ -974,7 +1022,7 @@ export function PcbShowcase() {
               className={`pcb-callout ${openId === c.id ? "is-open" : ""}`}
               style={{ "--c": c.color, "--c-rgb": c.colorRgb } as CSSProperties}
               aria-expanded={openId === c.id}
-              aria-label={`${c.label} — ${c.sub}`}
+              aria-label={`${c.label} - ${c.sub}`}
               onClick={() => setOpenId((cur) => (cur === c.id ? null : c.id))}
               ref={(el) => {
                 calloutEls.current[i] = el;
@@ -1001,11 +1049,11 @@ export function PcbShowcase() {
               captionEls.current[0] = el;
             }}
           >
-            <p className="kicker">Flagship build · KiCad · firmware · CAD</p>
+            <p className="kicker">Flagship build - KiCad - firmware - CAD</p>
             <h2 className="display text-4xl text-white sm:text-5xl">A CubeSat telemetry board, built end-to-end.</h2>
             <p className="lead mt-5 max-w-md">
               Schematic and PCB laid out in KiCad, ESP32-S3 firmware, a machined enclosure,
-              hand-soldered — LoRa + GNSS RF and an ATECC608A secure element that signs every packet.
+              hand-soldered - LoRa + GNSS RF and an ATECC608A secure element that signs every packet.
               Scroll to take it apart, drag to spin it.
             </p>
           </div>
@@ -1017,10 +1065,10 @@ export function PcbShowcase() {
               captionEls.current[1] = el;
             }}
           >
-            <p className="kicker">Mechanical · CAD</p>
+            <p className="kicker">Mechanical - CAD</p>
             <h2 className="display text-4xl text-white sm:text-5xl">Machined enclosure, clear lid.</h2>
             <p className="lead mt-5 max-w-md">
-              A two-piece housing I modeled around the board — sealed for deployment, opening on
+              A two-piece housing I modeled around the board - sealed for deployment, opening on
               standoffs for bring-up and debug.
             </p>
           </div>
@@ -1035,7 +1083,7 @@ export function PcbShowcase() {
             <p className="kicker">Inside the board</p>
             <h2 className="display text-3xl text-white sm:text-4xl">Five subsystems, hand-soldered.</h2>
             <p className="lead mt-4 max-w-md">
-              Compute, positioning, radio, sensing, and power — tap a point for the parts.
+              Compute, positioning, radio, sensing, and power - tap a point for the parts.
             </p>
           </div>
         </div>
@@ -1048,7 +1096,7 @@ export function PcbShowcase() {
             captionEls.current[3] = el;
           }}
         >
-          Scroll to explode ↓
+          Scroll to explode down
         </div>
 
         {/* morph target: the 3D board cross-dissolves into its real KiCad layout */}
@@ -1063,7 +1111,7 @@ export function PcbShowcase() {
             <img
               className="pcb-layout-img"
               src="/pcb/layout-dark.webp"
-              alt="KiCad layout of the CubeSat telemetry board — copper routing and silkscreen"
+              alt="KiCad layout of the CubeSat telemetry board - copper routing and silkscreen"
               draggable={false}
             />
             {/* fab-drawing corner crop marks (engineering-drawing frame) */}
@@ -1080,9 +1128,9 @@ export function PcbShowcase() {
             }}
           >
             <p className="kicker">As routed</p>
-            <h2 className="display text-3xl text-white sm:text-4xl">Schematic → layout, routed by hand.</h2>
+            <h2 className="display text-3xl text-white sm:text-4xl">Schematic -&gt; layout, routed by hand.</h2>
             <p className="lead mt-4 max-w-md">
-              Every footprint placed and every net routed in KiCad — RF front ends, the power tree,
+              Every footprint placed and every net routed in KiCad - RF front ends, the power tree,
               and the secure element you just toured, as the real board.
             </p>
           </div>
@@ -1095,7 +1143,7 @@ export function PcbShowcase() {
         <h2 className="display mt-3 text-3xl text-white sm:text-4xl">Every block, one job.</h2>
         <p className="lead mt-5 max-w-2xl">
           A handful of blocks share one board, wired so the data it gathers can be measured, located,
-          signed, and sent — and trusted at the other end.
+          signed, and sent - and trusted at the other end.
         </p>
         <Reveal className="pcb-sub-grid mt-10">
           {SUBSYSTEMS.map((c) => (
@@ -1119,13 +1167,13 @@ export function PcbShowcase() {
         {/* the code that does it */}
         <PcbFirmware />
 
-        {/* the software half — firmware + ground station */}
+        {/* the software half - firmware + ground station */}
         <Reveal className="pcb-soft-wrap mt-16">
           <p className="kicker">The software</p>
           <h2 className="display mt-3 text-3xl text-white sm:text-4xl">From board to ground station.</h2>
           <p className="lead mt-4 max-w-2xl">
             The board is half of it. An ESP-IDF firmware and a Python ground station move signed,
-            replay-protected telemetry over LoRa — with a Wi-Fi backup and a post-quantum session layer.
+            replay-protected telemetry over LoRa - with a Wi-Fi backup and a post-quantum session layer.
           </p>
           <div className="pcb-soft-grid mt-8">
             {SOFTWARE.map((s) => (

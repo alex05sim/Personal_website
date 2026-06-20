@@ -3,7 +3,7 @@
 /**
  * Approximate the sub-solar point (the lat/lon where the sun is directly
  * overhead) for a given instant. Uses a standard solar-declination estimate
- * and the mean-sun longitude; accurate to ~1° / ~15 min, which is plenty for a
+ * and the mean-sun longitude; accurate to ~1 deg / ~15 min, which is plenty for a
  * visual day/night terminator.
  */
 export function subsolarPoint(date: Date = new Date()): { lat: number; lon: number } {

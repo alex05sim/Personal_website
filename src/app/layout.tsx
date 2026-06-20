@@ -21,11 +21,11 @@ const siteUrl = "https://alexsimpson.dev";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Alex Simpson — Security · Hardware · AI",
-    template: "%s — Alex Simpson",
+    default: "Alex Simpson - Security - Hardware - AI",
+    template: "%s - Alex Simpson",
   },
   description:
-    "Alex Simpson — UC Berkeley CS + Data Science. Cryptographic security, custom hardware, and GPU-accelerated AI. Former NSA software intern.",
+    "Alex Simpson - UC Berkeley CS + Data Science. Cryptographic security, custom hardware, and GPU-accelerated AI. Former NSA software intern.",
   keywords: [
     "Alex Simpson",
     "UC Berkeley",
@@ -38,18 +38,18 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Alex Simpson" }],
   openGraph: {
-    title: "Alex Simpson — Security · Hardware · AI",
+    title: "Alex Simpson - Security - Hardware - AI",
     description:
-      "Cryptographic security, custom hardware, and GPU-accelerated AI — systems built from the board up.",
+      "Cryptographic security, custom hardware, and GPU-accelerated AI - systems built from the board up.",
     url: siteUrl,
     siteName: "Alex Simpson",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Alex Simpson — Security · Hardware · AI",
+    title: "Alex Simpson - Security - Hardware - AI",
     description:
-      "Cryptographic security, custom hardware, and GPU-accelerated AI — systems built from the board up.",
+      "Cryptographic security, custom hardware, and GPU-accelerated AI - systems built from the board up.",
   },
 };
 
@@ -65,7 +65,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">
-        {/* Always load at the top — don't let the browser restore scroll on reload. */}
+        {/* Always load at the top - don't let the browser restore scroll on reload. */}
         <script dangerouslySetInnerHTML={{ __html: "history.scrollRestoration='manual';" }} />
         <SmoothScroll />
         <ScrollProgress />

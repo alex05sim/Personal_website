@@ -104,7 +104,7 @@ export function SiteInvader({ active, onToggle }: { active: boolean; onToggle: (
           {shots.map((shot) => (
             <div className="invader-shot" key={shot.id} style={{ left: `${shot.x}%` }} />
           ))}
-          <div className="invader-ship">▟▙</div>
+          <div className="invader-ship">{"/^\\"}</div>
           <div className="invader-status">A/D or arrows move | Space shoots | Hits {hits}/5</div>
         </div>
       ) : null}

@@ -14,8 +14,8 @@ type State = { hasError: boolean };
 
 /**
  * Wraps a WebGL <Canvas>. If three.js / @react-three/fiber throws while creating
- * or rendering the scene — most commonly because the browser/GPU can't provide a
- * WebGL context — this renders a static fallback instead of letting the error
+ * or rendering the scene - most commonly because the browser/GPU can't provide a
+ * WebGL context - this renders a static fallback instead of letting the error
  * bubble up and blank the whole page.
  *
  * Note: this catches React render/init throws. A *lost* context after successful

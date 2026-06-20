@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Reveal } from "./portfolio/shared";
 
-type MediaItem = { src: string; caption?: string; video?: boolean };
+type MediaItem = { src: string; caption?: string; video?: boolean; fit?: "cover" | "contain" };
 
 /** Renders project images / GIFs / video; any item whose file is missing is hidden (no broken icon). */
 export function MediaGallery({ items, label = "Gallery" }: { items?: MediaItem[]; label?: string }) {
@@ -32,7 +32,7 @@ export function MediaGallery({ items, label = "Gallery" }: { items?: MediaItem[]
               />
             ) : (
               <img
-                className="media-el"
+                className={`media-el ${it.fit === "contain" ? "is-contain" : ""}`}
                 src={it.src}
                 alt={it.caption ?? ""}
                 loading="lazy"

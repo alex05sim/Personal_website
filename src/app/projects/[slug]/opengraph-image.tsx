@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { getProject, projects } from "@/lib/portfolio-data";
 
-export const alt = "Project — Alex Simpson";
+export const alt = "Project - Alex Simpson";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -41,7 +41,7 @@ export default async function OpengraphImage({
         <div style={{ display: "flex", alignItems: "center", gap: "14px", color: accent }}>
           <div style={{ width: 16, height: 16, borderRadius: 999, background: accent }} />
           <div style={{ fontSize: 26, letterSpacing: 6, textTransform: "uppercase" }}>
-            {`${project?.domain ?? "Project"} · ${project?.period ?? ""}`}
+            {`${project?.domain ?? "Project"} - ${project?.period ?? ""}`}
           </div>
         </div>
 
@@ -56,7 +56,7 @@ export default async function OpengraphImage({
 
         <div style={{ display: "flex", alignItems: "center", gap: "14px", fontSize: 28, color: "#aab2c6" }}>
           <div style={{ width: 14, height: 14, borderRadius: 999, background: "#6ea0ff" }} />
-          Alex Simpson — Security · Hardware · AI
+          Alex Simpson - Security - Hardware - AI
         </div>
       </div>
     ),

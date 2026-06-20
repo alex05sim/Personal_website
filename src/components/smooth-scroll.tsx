@@ -31,7 +31,7 @@ export function SmoothScroll() {
     };
     raf = requestAnimationFrame(loop);
 
-    // Smoothly handle in-page anchor links (#work, #contact, …).
+    // Smoothly handle in-page anchor links (#work, #contact, ...).
     const onClick = (event: MouseEvent) => {
       const anchor = (event.target as HTMLElement)?.closest('a[href*="#"]') as
         | HTMLAnchorElement

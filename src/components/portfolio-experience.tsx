@@ -2,6 +2,7 @@
 
 import { ArrowUpRight, ExternalLink, GraduationCap, Search } from "lucide-react";
 import { motion, useScroll, useTransform } from "motion/react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import {
@@ -35,7 +36,7 @@ export function FloatingTabs() {
   // Scroll-spy: highlight Work / Contact tabs as their sections pass center.
   useEffect(() => {
     if (pathname !== "/") {
-      setActiveSection(null);
+      window.setTimeout(() => setActiveSection(null), 0);
       return;
     }
 
@@ -84,22 +85,22 @@ export function FloatingTabs() {
       style={{ backdropFilter: blur, opacity, y }}
     >
       <div className="nav-inner flex h-14 w-full items-center gap-1 overflow-x-auto px-4 sm:px-6 lg:px-10">
-        <a className="nav-brand" href="/">
+        <Link className="nav-brand" href="/">
           <span className="dot" aria-hidden="true" />
           {profile.name}
-        </a>
+        </Link>
         {navigationTabs.map((tab) => {
           const active = isTabActive(tab.href);
 
           return (
-            <a
+            <Link
               aria-current={active ? "page" : undefined}
               className={`nav-tab ${active ? "nav-tab-active" : ""}`}
               href={tab.href}
               key={tab.href}
             >
               {tab.label}
-            </a>
+            </Link>
           );
         })}
         <button
@@ -109,7 +110,7 @@ export function FloatingTabs() {
           aria-label="Open command menu"
         >
           <Search size={13} />
-          <kbd>⌘K</kbd>
+          <kbd>Ctrl/Command K</kbd>
         </button>
       </div>
     </motion.nav>
@@ -124,13 +125,13 @@ const tickerItems = [
   "Python",
   "C",
   "Go",
-  "PyTorch · CUDA",
+  "PyTorch / CUDA",
   "CuPy",
   "NumPy",
   "KiCad",
   "ESP32-S3",
   "LoRa",
-  "AES · HMAC",
+  "AES / HMAC",
   "RISC-V",
   "scikit-learn",
   "Verlet integration",
@@ -164,10 +165,11 @@ type Stat = {
 };
 
 const stats: Stat[] = [
-  { count: { value: 3.78, decimals: 2 }, label: "GPA", sub: "UC Berkeley", accent: true },
-  { value: "NSA", label: "Software intern", sub: "2023 – 2024" },
-  { value: "TS/SCI", label: "Clearance eligible", sub: "Polygraph · reactivation-ready" },
-  { value: "’28", label: "Class of 2028", sub: "CS + Data Science" },
+  { value: "Berkeley", label: "CS + Data Science", sub: "Expected May 2028" },
+  { value: "NSA", label: "Software intern", sub: "2023 - 2024" },
+  { value: "CubeSat", label: "Secure telemetry PCB", sub: "LoRa + GNSS + signing", accent: true },
+  { value: "CS 161", label: "Secure file system", sub: "Malicious datastore model" },
+  { count: { value: 3.78, decimals: 2 }, label: "GPA", sub: "UC Berkeley" },
 ];
 
 function StatsStrip() {
@@ -204,11 +206,11 @@ function StatsStrip() {
 const principles = [
   {
     title: "Correctness over flash",
-    body: "I gravitate toward problems where being roughly right isn't enough — cryptography, embedded firmware, numerical methods. The interesting part is the failure mode.",
+    body: "I gravitate toward problems where being roughly right isn't enough - cryptography, embedded firmware, numerical methods. The interesting part is the failure mode.",
   },
   {
     title: "From the board up",
-    body: "Comfortable across the whole stack — PCB and firmware, systems and security, models and the GPUs they run on — so I can follow a problem wherever it goes.",
+    body: "Comfortable across the whole stack - PCB and firmware, systems and security, models and the GPUs they run on - so I can follow a problem wherever it goes.",
   },
   {
     title: "Measure, then claim",
@@ -281,10 +283,10 @@ function DomainsSection() {
                         </Chip>
                       ))}
                     </div>
-                    <a className="domain-link" href={`/projects/${domain.projectSlug}`}>
+                    <Link className="domain-link" href={`/projects/${domain.projectSlug}`}>
                       See the build
                       <ArrowUpRight size={15} />
-                    </a>
+                    </Link>
                   </article>
                 </TiltCard>
               </Reveal>
@@ -302,7 +304,7 @@ function WorkCard({ project, index }: { project: (typeof featuredProjects)[numbe
   return (
     <Reveal delay={index * 0.06}>
       <TiltCard max={5}>
-        <a
+        <Link
           className="card work-card"
           data-domain={domainKey(project.domain)}
           href={`/projects/${project.slug}`}
@@ -310,28 +312,29 @@ function WorkCard({ project, index }: { project: (typeof featuredProjects)[numbe
           <div className="work-figure">
             <Icon size={26} />
           </div>
-        <div>
-          <div className="work-meta">
-            <span className="work-domain">{project.domain}</span>
-            <span className="work-dot" />
-            <span className="work-period">{project.period}</span>
-            <span className="work-dot" />
-            <span className="work-status">{project.status}</span>
+          <div>
+            <div className="work-meta">
+              <span className="work-domain">{project.domain}</span>
+              <span className="work-dot" />
+              <span className="work-period">{project.period}</span>
+              <span className="work-dot" />
+              <span className="work-status">{project.status}</span>
+            </div>
+            <h3>{project.title}</h3>
+            <p className="work-tagline">{project.tagline}</p>
+            <div className="work-stack">
+              {project.stack.slice(0, 5).map((item) => (
+                <Chip key={item} mono>
+                  {item}
+                </Chip>
+              ))}
+              <Chip mono>{project.verification}</Chip>
+            </div>
           </div>
-          <h3>{project.title}</h3>
-          <p className="work-tagline">{project.tagline}</p>
-          <div className="work-stack">
-            {project.stack.slice(0, 5).map((item) => (
-              <Chip key={item} mono>
-                {item}
-              </Chip>
-            ))}
+          <div className="work-arrow">
+            <ArrowUpRight size={18} />
           </div>
-        </div>
-        <div className="work-arrow">
-          <ArrowUpRight size={18} />
-        </div>
-        </a>
+        </Link>
       </TiltCard>
     </Reveal>
   );
@@ -350,7 +353,7 @@ function ResearchSection() {
           <p className="lead mt-6 max-w-2xl">{research.summary}</p>
         </Reveal>
         <Reveal delay={0.08} className="mt-10">
-          <a className="card work-card" data-domain="ai" href={`/projects/${research.slug}`}>
+          <Link className="card work-card" data-domain="ai" href={`/projects/${research.slug}`}>
             <div className="work-figure">
               <Icon size={26} />
             </div>
@@ -370,12 +373,13 @@ function ResearchSection() {
                     {item}
                   </Chip>
                 ))}
+                <Chip mono>{research.verification}</Chip>
               </div>
             </div>
             <div className="work-arrow">
               <ArrowUpRight size={18} />
             </div>
-          </a>
+          </Link>
         </Reveal>
       </div>
     </section>
@@ -395,14 +399,14 @@ function SelectedWork() {
               text="Proof, not promises."
             />
             <p className="lead">
-              Real systems with real constraints — a satellite-grade PCB, a GPU physics
+              Real systems with real constraints - a satellite-grade PCB, a GPU physics
               engine, and a cryptosystem that assumes the server is hostile.
             </p>
           </div>
-          <a className="btn btn-ghost" href="/projects">
+          <Link className="btn btn-ghost" href="/projects">
             All projects
             <ArrowUpRight size={16} />
-          </a>
+          </Link>
         </Reveal>
 
         <div className="work-list mt-14">
@@ -445,7 +449,7 @@ function ExperienceSection() {
                         <span className="period">{item.period}</span>
                       </div>
                       <p className="exp-org">
-                        {item.org} · {item.location}
+                        {item.org} - {item.location}
                       </p>
                       <ul className="exp-points">
                         {item.points.map((point) => (
@@ -488,7 +492,7 @@ function ExperienceSection() {
                 <div className="grid gap-1">
                   <p className="edu-meta text-[var(--foreground)]">{education.degree}</p>
                   <p className="edu-meta">
-                    {education.graduation} · GPA {education.gpa}
+                    {education.graduation} - GPA {education.gpa}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -604,6 +608,7 @@ export function PortfolioExperience() {
     <main className={`relative z-10 ${invaderActive ? "invader-active" : ""}`}>
       <FloatingTabs />
       <SpaceHero />
+      <StatsStrip />
       <Ticker />
       <DomainsSection />
       <ApproachSection />

@@ -9,10 +9,10 @@ export default function PlainExperiencePage() {
       {experience.map((item) => (
         <div key={item.org}>
           <h3>
-            {item.role} · {item.org}
+            {item.role} - {item.org}
           </h3>
           <p className="plain-note">
-            {item.period} · {item.location}
+            {item.period} - {item.location}
           </p>
           <ul>
             {item.points.map((point) => (
@@ -30,11 +30,11 @@ export default function PlainExperiencePage() {
       <p>
         {education.degree}
         <br />
-        {education.graduation} · GPA {education.gpa}
+        {education.graduation} - GPA {education.gpa}
       </p>
       <p>
         <strong>coursework:</strong>{" "}
-        {education.coursework.map((c) => c.split(" — ")[0]).join(", ")}
+        {education.coursework.map((c) => c.split(" - ")[0]).join(", ")}
       </p>
     </>
   );

@@ -8,8 +8,8 @@ import path from "path";
  *
  * Two backends, selected automatically:
  *   1. A Redis REST API (Upstash / Vercel KV) when KV_REST_API_URL + KV_REST_API_TOKEN
- *      are set — this is what you want in production on serverless hosting.
- *   2. A local JSON file in the OS temp dir otherwise — works for `next dev` and
+ *      are set - this is what you want in production on serverless hosting.
+ *   2. A local JSON file in the OS temp dir otherwise - works for `next dev` and
  *      any long-running Node server. Kept outside the project tree on purpose so
  *      writes don't trip the dev file-watcher into rebuilding. (Ephemeral on
  *      serverless; set up KV for prod.)

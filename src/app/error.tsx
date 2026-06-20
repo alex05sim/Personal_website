@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect } from "react";
 
 /**
@@ -23,7 +24,7 @@ export default function Error({
       className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 text-center"
     >
       <span className="chip chip-mono" style={{ color: "var(--accent)" }}>
-        ● System fault
+        Status: System fault
       </span>
       <h1 className="mt-5 text-3xl font-semibold tracking-tight">Something went sideways</h1>
       <p className="mt-3 max-w-md leading-relaxed" style={{ color: "var(--muted)" }}>
@@ -33,9 +34,9 @@ export default function Error({
         <button type="button" className="btn btn-primary" onClick={reset}>
           Try again
         </button>
-        <a className="btn btn-ghost" href="/">
+        <Link className="btn btn-ghost" href="/">
           Go home
-        </a>
+        </Link>
       </div>
       {error?.digest ? (
         <p

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { projects } from "@/lib/portfolio-data";
 
 export default function PlainProjectsPage() {
@@ -11,19 +12,20 @@ export default function PlainProjectsPage() {
       {projects.map((project) => (
         <div key={project.slug} className="plain-project-entry">
           <h3>
-            <a href={`/plain/projects/${project.slug}`}>{project.title}</a>
+            <Link href={`/plain/projects/${project.slug}`}>{project.title}</Link>
           </h3>
           <p className="plain-note">
-            {project.domain} · {project.period} · {project.status}
+            {project.domain} - {project.period} - {project.status}
           </p>
           <p>{project.tagline}</p>
           <p>{project.summary}</p>
           <p className="plain-note">stack: {project.stack.join(", ")}</p>
+          <p className="plain-note">proof: {project.verification}</p>
           <p>
-            <a href={`/plain/projects/${project.slug}`}>→ full writeup</a>
+            <Link href={`/plain/projects/${project.slug}`}>-&gt; full writeup</Link>
             {project.links.map((link) => (
               <span key={link.href}>
-                {" · "}
+                {" - "}
                 <a href={link.href} target="_blank" rel="noreferrer">{link.label}</a>
               </span>
             ))}

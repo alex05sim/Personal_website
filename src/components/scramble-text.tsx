@@ -1,8 +1,9 @@
 "use client";
 
-import { createElement, type ElementType, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const GLYPHS = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789<>-_/\\[]{}#$%&*+=";
+type ScrambleTag = "span" | "h1" | "h2" | "h3" | "p";
 
 /**
  * "Decrypts" text on first scroll-into-view: characters cycle through random
@@ -16,7 +17,7 @@ export function ScrambleText({
 }: {
   text: string;
   className?: string;
-  as?: ElementType;
+  as?: ScrambleTag;
   duration?: number;
 }) {
   const [display, setDisplay] = useState(text);
@@ -35,8 +36,8 @@ export function ScrambleText({
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     if (prefersReduced) {
-      setDisplay(text);
-      return;
+      const timer = window.setTimeout(() => setDisplay(text), 0);
+      return () => window.clearTimeout(timer);
     }
 
     const animate = () => {
@@ -91,5 +92,14 @@ export function ScrambleText({
     };
   }, [text, duration]);
 
-  return createElement(Tag, { ref, className, "aria-label": text }, display);
+  const setRef = (node: HTMLElement | null) => {
+    ref.current = node;
+  };
+  const props = { ref: setRef, className, "aria-label": text };
+
+  if (Tag === "h1") return <h1 {...props}>{display}</h1>;
+  if (Tag === "h2") return <h2 {...props}>{display}</h2>;
+  if (Tag === "h3") return <h3 {...props}>{display}</h3>;
+  if (Tag === "p") return <p {...props}>{display}</p>;
+  return <span {...props}>{display}</span>;
 }

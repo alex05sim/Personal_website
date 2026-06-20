@@ -62,10 +62,16 @@ export function TiltCard({
   max?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [enabled, setEnabled] = useState(true);
+  const [enabled, setEnabled] = useState(
+    () => typeof window === "undefined" || window.matchMedia("(hover: hover) and (pointer: fine)").matches,
+  );
 
   useEffect(() => {
-    setEnabled(window.matchMedia("(hover: hover) and (pointer: fine)").matches);
+    const query = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const update = () => setEnabled(query.matches);
+
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
   }, []);
 
   const onMove = (event: ReactMouseEvent<HTMLDivElement>) => {
@@ -109,7 +115,11 @@ export function CountUp({
   duration?: number;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const [display, setDisplay] = useState(0);
+  const [display, setDisplay] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? value
+      : 0,
+  );
   const done = useRef(false);
 
   useEffect(() => {
@@ -117,8 +127,8 @@ export function CountUp({
     if (!el) return;
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setDisplay(value);
-      return;
+      const timer = window.setTimeout(() => setDisplay(value), 0);
+      return () => window.clearTimeout(timer);
     }
 
     const observer = new IntersectionObserver(

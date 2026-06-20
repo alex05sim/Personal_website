@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect } from "react";
 import { profile } from "@/lib/portfolio-data";
 
@@ -14,18 +15,18 @@ export default function PlainLayout({ children }: { children: React.ReactNode })
       <div className="plain-inner">
         <nav className="plain-nav">
           <span className="plain-nav-title">{profile.name}</span>
-          <span className="plain-nav-sep">—</span>
-          <a href="/plain">home</a>
+          <span className="plain-nav-sep">-</span>
+          <Link href="/plain">home</Link>
           <span className="plain-nav-sep">|</span>
-          <a href="/plain/projects">projects</a>
+          <Link href="/plain/projects">projects</Link>
           <span className="plain-nav-sep">|</span>
-          <a href="/plain/experience">experience</a>
+          <Link href="/plain/experience">experience</Link>
           <span className="plain-nav-sep">|</span>
-          <a href="/plain/about">about</a>
+          <Link href="/plain/about">about</Link>
           <span className="plain-nav-sep">|</span>
           <a href={`mailto:${profile.email}`}>contact</a>
           <span className="plain-nav-sep">|</span>
-          <a href="/">← fancy version</a>
+          <Link href="/">&lt;- fancy version</Link>
         </nav>
         {children}
       </div>

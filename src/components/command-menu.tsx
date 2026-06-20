@@ -2,6 +2,7 @@
 
 import {
   ArrowUpRight,
+  BriefcaseBusiness,
   FileText,
   Globe2,
   Home,
@@ -42,6 +43,7 @@ export function CommandMenu() {
     return [
       { id: "home", label: "Home", group: "Pages", icon: Home, run: go("/") },
       { id: "projects", label: "All projects", group: "Pages", icon: Layers, run: go("/projects") },
+      { id: "hire-me", label: "Hire me", group: "Pages", icon: BriefcaseBusiness, run: go("/hire-me") },
       { id: "world", label: "World", group: "Pages", icon: Globe2, run: go("/world") },
       ...projects.map((project) => ({
         id: project.slug,
@@ -112,8 +114,10 @@ export function CommandMenu() {
 
   useEffect(() => {
     if (open) {
-      setActiveIndex(0);
-      const timer = window.setTimeout(() => inputRef.current?.focus(), 30);
+      const timer = window.setTimeout(() => {
+        setActiveIndex(0);
+        inputRef.current?.focus();
+      }, 30);
       return () => window.clearTimeout(timer);
     }
   }, [open]);
@@ -152,7 +156,7 @@ export function CommandMenu() {
           <input
             ref={inputRef}
             className="cmdk-input"
-            placeholder="Jump to a page, project, or link…"
+            placeholder="Jump to a page, project, or link..."
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
@@ -164,7 +168,7 @@ export function CommandMenu() {
         </div>
         <div className="cmdk-list">
           {filtered.length === 0 ? (
-            <div className="cmdk-empty">No matches for “{query}”.</div>
+            <div className="cmdk-empty">No matches for &quot;{query}&quot;.</div>
           ) : (
             groups.map((group) => (
               <div key={group}>

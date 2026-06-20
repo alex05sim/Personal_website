@@ -9,7 +9,7 @@ const KEYWORDS = new Set([
   "float", "double", "unsigned", "long", "break", "continue", "switch", "case", "esp_err_t",
 ]);
 
-/** Tiny dependency-free C/C++ tokenizer → coloured spans, one line at a time. */
+/** Tiny dependency-free C/C++ tokenizer -> coloured spans, one line at a time. */
 function highlightLine(line: string): ReactNode[] {
   const out: ReactNode[] = [];
   const re = /(\/\/.*$)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(\b0[xX][0-9a-fA-F]+\b|\b\d[\d.]*[fFuUlL]*\b)|(#\s*\w+)|([A-Za-z_]\w*)/g;
@@ -79,7 +79,7 @@ export function CodeCard({
   );
 }
 
-// real telemetry send path — verbatim (lightly trimmed) from components/tasks/lora_task.c
+// real telemetry send path - verbatim (lightly trimmed) from components/tasks/lora_task.c
 const TELEMETRY = `// components/tasks/lora_task.c
 static esp_err_t transmit_telemetry_from_fix(const gnss_fix_t *fix, bool bench_fix) {
   hope_packet_t pkt;
@@ -111,9 +111,9 @@ static esp_err_t transmit_telemetry_from_fix(const gnss_fix_t *fix, bool bench_f
 export function PcbFirmware() {
   return (
     <CodeCard
-      kicker="Firmware · ESP-IDF"
+      kicker="Firmware - ESP-IDF"
       title="The telemetry loop."
-      lead="One pass on the ESP32-S3: fuse GNSS and sensor data into a v2 telemetry sample, stamp it with a strictly-increasing per-session counter, encode the HOPE frame, and send it over the SX1262 — falling back to Wi-Fi UDP if the radio drops."
+      lead="One pass on the ESP32-S3: fuse GNSS and sensor data into a v2 telemetry sample, stamp it with a strictly-increasing per-session counter, encode the HOPE frame, and send it over the SX1262 - falling back to Wi-Fi UDP if the radio drops."
       file="lora_task.c"
       code={TELEMETRY}
     />

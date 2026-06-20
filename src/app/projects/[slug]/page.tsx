@@ -24,7 +24,7 @@ export async function generateMetadata({
     title: project.title,
     description: project.tagline,
     openGraph: {
-      title: `${project.title} — Alex Simpson`,
+      title: `${project.title} - Alex Simpson`,
       description: project.summary,
       type: "article",
     },

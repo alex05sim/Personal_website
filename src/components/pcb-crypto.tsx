@@ -23,8 +23,8 @@ const THREATS: { a: string; d: string; s: StatusKey }[] = [
 ];
 
 const LAYERS: { layer: string; prim: string; role: string; c: string; s: StatusKey }[] = [
-  { layer: "Identity", prim: "ML-DSA", role: "signs the handshake — proves which node is talking", c: "178, 146, 255", s: "gated" },
-  { layer: "Session", prim: "ML-KEM", role: "post-quantum key encapsulation → a fresh shared secret per session", c: "110, 160, 255", s: "gated" },
+  { layer: "Identity", prim: "ML-DSA", role: "signs the handshake - proves which node is talking", c: "178, 146, 255", s: "gated" },
+  { layer: "Session", prim: "ML-KEM", role: "post-quantum key encapsulation -> a fresh shared secret per session", c: "110, 160, 255", s: "gated" },
   { layer: "Transport", prim: "HMAC-SHA256", role: "keyed auth tag on every packet (AEAD encryption planned)", c: "126, 224, 166", s: "ok" },
   { layer: "Replay", prim: "counter window", role: "per-session counter rejects stale or duplicate packets", c: "255, 107, 107", s: "ok" },
 ];
@@ -74,7 +74,7 @@ esp_err_t packet_crypto_derive_keys(const mlkem_session_t *session,
   return ESP_OK;
 }`;
 
-/** Security-architecture deep dive — designed PQ stack, with honest implementation status. */
+/** Security-architecture deep dive - designed PQ stack, with honest implementation status. */
 export function PcbCrypto() {
   return (
     <>
@@ -83,18 +83,18 @@ export function PcbCrypto() {
         <h2 className="display mt-3 text-3xl text-white sm:text-4xl">Post-quantum, by design.</h2>
         <p className="lead mt-4 max-w-2xl">
           The link is the threat surface: an attacker can hear every LoRa packet, replay it, or forge one.
-          The crypto layer answers with a post-quantum design — and ships the parts that matter first.
+          The crypto layer answers with a post-quantum design - and ships the parts that matter first.
         </p>
       </Reveal>
 
-      {/* threat model → defenses */}
+      {/* threat model -> defenses */}
       <Reveal className="pcb-threat mt-8">
-        <p className="pcb-sublabel">Threat model → defense</p>
+        <p className="pcb-sublabel">Threat model -&gt; defense</p>
         <div className="pcb-threat-grid mt-4">
           {THREATS.map((t) => (
             <div className="pcb-threat-row" key={t.a}>
               <span className="pcb-threat-a">{t.a}</span>
-              <span className="pcb-threat-arrow" aria-hidden="true">→</span>
+              <span className="pcb-threat-arrow" aria-hidden="true">-&gt;</span>
               <span className="pcb-threat-d">{t.d}</span>
               <Badge s={t.s} />
             </div>
@@ -132,20 +132,20 @@ export function PcbCrypto() {
             <line x1="650" y1="64" x2="650" y2="240" className="pcb-hs-life" />
             <g className="pcb-node" style={{ "--n": "246, 162, 60" } as CSSProperties}>
               <rect x="40" y="22" width="180" height="40" rx="9" className="pcb-node-box" />
-              <text x="130" y="46" className="pcb-node-t">CubeSat · ESP32-S3</text>
+              <text x="130" y="46" className="pcb-node-t">CubeSat - ESP32-S3</text>
             </g>
             <g className="pcb-node" style={{ "--n": "178, 146, 255" } as CSSProperties}>
               <rect x="560" y="22" width="180" height="40" rx="9" className="pcb-node-box" />
               <text x="650" y="46" className="pcb-node-t">Ground station</text>
             </g>
-            {/* step 1: HELLO A → B */}
-            <text x="390" y="100" className="pcb-hs-lbl">HELLO · ephemeral ML-KEM pk + ML-DSA sig</text>
+            {/* step 1: HELLO A -> B */}
+            <text x="390" y="100" className="pcb-hs-lbl">HELLO - ephemeral ML-KEM pk + ML-DSA sig</text>
             <line x1="130" y1="112" x2="650" y2="112" className="pcb-hs-line pcb-hs-1" markerEnd="url(#hsArrow)" />
-            {/* step 2: KEM_REPLY B → A */}
-            <text x="390" y="158" className="pcb-hs-lbl">KEM_REPLY · ciphertext + ML-DSA sig</text>
+            {/* step 2: KEM_REPLY B -> A */}
+            <text x="390" y="158" className="pcb-hs-lbl">KEM_REPLY - ciphertext + ML-DSA sig</text>
             <line x1="650" y1="170" x2="130" y2="170" className="pcb-hs-line pcb-hs-2" markerEnd="url(#hsArrow)" />
-            {/* step 3: SESSION_ACK A → B */}
-            <text x="390" y="216" className="pcb-hs-lbl">SESSION_ACK · confirm shared secret</text>
+            {/* step 3: SESSION_ACK A -> B */}
+            <text x="390" y="216" className="pcb-hs-lbl">SESSION_ACK - confirm shared secret</text>
             <line x1="130" y1="228" x2="650" y2="228" className="pcb-hs-line pcb-hs-3" markerEnd="url(#hsArrow)" />
           </svg>
           <p className="pcb-hs-note">
@@ -167,7 +167,7 @@ export function PcbCrypto() {
             ))}
             <span className="pcb-packet-cell is-pay" style={{ flexGrow: 12 } as CSSProperties}>
               <b>payload</b>
-              <i>≤128 B</i>
+              <i>&lt;=128 B</i>
             </span>
             <span className="pcb-packet-cell is-tag" style={{ flexGrow: 4 } as CSSProperties}>
               <b>HMAC tag</b>
@@ -175,9 +175,9 @@ export function PcbCrypto() {
             </span>
           </div>
           <div className="pcb-packet-legend">
-            <span><i className="pcb-leg is-hdr" />20-byte header — authenticated</span>
-            <span><i className="pcb-leg is-pay" />payload — authenticated · <em>encryption = roadmap</em></span>
-            <span><i className="pcb-leg is-tag" />HMAC-SHA256 tag — keyed from the session</span>
+            <span><i className="pcb-leg is-hdr" />20-byte header - authenticated</span>
+            <span><i className="pcb-leg is-pay" />payload - authenticated - <em>encryption = roadmap</em></span>
+            <span><i className="pcb-leg is-tag" />HMAC-SHA256 tag - keyed from the session</span>
           </div>
         </div>
       </Reveal>
@@ -201,9 +201,9 @@ export function PcbCrypto() {
 
       {/* the crypto code itself */}
       <CodeCard
-        kicker="Crypto · packet_crypto.c"
+        kicker="Crypto - packet_crypto.c"
         title="Keys from the shared secret."
-        lead="After the ML-KEM handshake, both ends derive separate transmit and receive keys from the shared secret with domain-separated HMAC-SHA256 — so the two directions never share a key."
+        lead="After the ML-KEM handshake, both ends derive separate transmit and receive keys from the shared secret with domain-separated HMAC-SHA256 - so the two directions never share a key."
         file="packet_crypto.c"
         code={CRYPTO_CODE}
       />

@@ -21,8 +21,8 @@ export function HudFrame() {
       <span className="hud-corner tr" />
       <span className="hud-corner bl" />
       <span className="hud-corner br" />
-      <span className="hud-edge left">Alex Simpson · Portfolio ’26</span>
-      <span className="hud-edge right">37.87°N 122.27°W · Berkeley</span>
+      <span className="hud-edge left">Alex Simpson - Portfolio 2026</span>
+      <span className="hud-edge right">37.87 degN 122.27 degW - Berkeley</span>
     </div>
   );
 }

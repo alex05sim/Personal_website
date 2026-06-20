@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowUp } from "lucide-react";
+import Link from "next/link";
 import { navigationTabs, profile, socials } from "@/lib/portfolio-data";
 
 export function SiteFooter() {
@@ -9,19 +10,19 @@ export function SiteFooter() {
       <div className="shell">
         <div className="footer-grid">
           <div className="footer-brand-col">
-            <a href="/" className="footer-brand">
+            <Link href="/" className="footer-brand">
               <span className="dot" aria-hidden="true" />
               {profile.name}
-            </a>
+            </Link>
             <p className="footer-tag">{profile.tagline}</p>
           </div>
 
           <nav className="footer-nav" aria-label="Footer">
             <span className="footer-label">Navigate</span>
             {navigationTabs.map((tab) => (
-              <a key={tab.href} href={tab.href}>
+              <Link key={tab.href} href={tab.href}>
                 {tab.label}
-              </a>
+              </Link>
             ))}
           </nav>
 
@@ -45,9 +46,9 @@ export function SiteFooter() {
         </div>
 
         <div className="footer-bottom">
-          <span>© {new Date().getFullYear()} {profile.name}</span>
+          <span>(c) {new Date().getFullYear()} {profile.name}</span>
           <span className="footer-built">
-            Next.js · R3F · Tailwind · Imagery: NASA &amp; Solar System Scope
+            Next.js - R3F - Tailwind - Imagery: NASA &amp; Solar System Scope
           </span>
           <button
             type="button"
