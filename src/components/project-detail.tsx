@@ -5,6 +5,9 @@ import { PcbShowcase } from "./pcb-showcase-lazy";
 import { MediaGallery } from "./media-gallery";
 import { BoardSectionTabs } from "./board-section-tabs";
 import { HopeMissionIntro } from "./hope-mission-intro";
+import { SolarIntro } from "./solar-intro";
+import { SolarPin } from "./solar-pin";
+import { ArrivalFlash } from "./arrival-flash";
 
 const statusLabels = {
   live: "Live artifact",
@@ -97,10 +100,19 @@ export function ProjectDetail({
 }) {
   const Icon = project.icon;
   const showcase = project.slug === "cubesat-telemetry-pcb";
+  const isSolar = project.slug === "solar-cycle-prediction";
 
   return (
-    <article className="detail" data-domain={domainKey(project.domain)}>
-      {showcase ? <HopeMissionIntro /> : null}
+    <article className={`detail${isSolar ? " detail-solar" : ""}`} data-domain={domainKey(project.domain)}>
+      {showcase ? (
+        <HopeMissionIntro />
+      ) : (
+        <>
+          <ArrivalFlash />
+          {isSolar ? <SolarIntro /> : null}
+          {isSolar ? <SolarPin /> : null}
+        </>
+      )}
       <div className="detail-aura" aria-hidden="true" />
       <div id="case-study" className="shell relative pb-8 pt-28 sm:pt-32">
         <Link className="detail-back" href="/projects">

@@ -376,6 +376,9 @@ input:focus-visible,
     radial-gradient(30% 36% at 60% 96%, rgba(43, 212, 238, 0.06), transparent 72%),
     radial-gradient(ellipse at 50% -8%, rgba(110, 160, 255, 0.08), transparent 45%),
     linear-gradient(180deg, #04050a 0%, #06070e 60%, var(--background) 100%);
+  /* dragging/clicking the 3D globe must not select the hero text (the name) */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .hero-canvas {
@@ -412,6 +415,14 @@ input:focus-visible,
 /* Hero content hugs the left edge instead of centering in the shell. */
 .hero-shell {
   padding-inline: clamp(1.5rem, 5.5vw, 6rem);
+  /* the shell is z-10 and full-width, so its empty areas would sit ON TOP of the
+     3D canvas and block clicks/drags to the globe + sun. Let clicks pass through,
+     and re-enable them only on the actual interactive controls. */
+  pointer-events: none;
+}
+.hero-shell a,
+.hero-shell button {
+  pointer-events: auto;
 }
 
 .hero-copy { text-shadow: 0 1px 40px rgba(0, 0, 0, 0.5); }
@@ -1475,6 +1486,51 @@ input:focus-visible,
   0% { opacity: 0.9; transform: scale(0.82); background-color: rgba(190, 230, 255, 0); }
   100% { opacity: 1; transform: scale(0.5); background-color: #d4eeff; }
 }
+/* warm variant — flying into the Sun toward the solar-research page */
+.hero-warp.is-sun {
+  background: radial-gradient(circle at 50% 46%, rgba(255, 216, 150, 0.62) 0%, rgba(255, 170, 80, 0.24) 16%, transparent 44%);
+}
+.hero-warp.is-sun.hero-warp-warp {
+  animation: hero-warp-flash-sun 0.5s ease-in forwards;
+}
+@keyframes hero-warp-flash-sun {
+  0% { opacity: 0.9; transform: scale(0.82); background-color: rgba(255, 232, 196, 0); }
+  100% { opacity: 1; transform: scale(0.5); background-color: #ffe9cb; }
+}
+
+/* generic arrival flash for non-HOPE project pages (cubesat uses .hopx-arrival) */
+.arrival-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 46%, #e8f6ff 0%, #bfe6ff 38%, #79b9ef 100%);
+  animation: arrival-flash 1000ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.arrival-flash.is-sun {
+  background: radial-gradient(circle at 50% 46%, #fff3df 0%, #ffd9a0 40%, #f2a64e 100%);
+}
+@keyframes arrival-flash {
+  0% { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 0; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arrival-flash { display: none; }
+}
+
+/* Sun cue + hint (warm/golden, vs the amber HOPE cue) */
+.hero-sun-dot {
+  background: #ffce69;
+  box-shadow: 0 0 12px rgba(255, 200, 90, 0.9);
+}
+.hero-sun-cue:hover {
+  color: #ffce69;
+}
+.sun-hint {
+  border-color: rgba(255, 200, 90, 0.5);
+  color: #ffe2ad;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-warp,
   .hope-hint {
@@ -1482,6 +1538,352 @@ input:focus-visible,
   }
   .hero-mission-dot {
     animation: none;
+  }
+}
+
+/* ============================================================
+   SOLAR INTRO — split live-sun + research landing
+   ============================================================ */
+.solar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 100svh;
+  overflow: hidden;
+  /* One soft glow anchored at the sun (far left), reaching right UNDER the text
+     so the copy sits inside the sun's atmosphere instead of a black void — but
+     translucent + fading to transparent before the right edge, so the corners
+     stay true black (stars show, reads as sunlight not a wash). Sits over the
+     article's starfield; the text (z-index 4) sits over this. */
+  background: radial-gradient(
+    118% 80% at 3% 50%,
+    rgba(255, 126, 56, 0.17) 0%,
+    rgba(255, 98, 46, 0.07) 30%,
+    rgba(255, 82, 40, 0.02) 48%,
+    transparent 62%
+  );
+  color: #f4e8d8;
+}
+/* full-bleed live sun (disc sits left; corona + flares bleed right into the text) */
+.solar-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.solar-sun {
+  position: absolute;
+  top: 50%;
+  /* matches .solar-pin's live geometry: edge-anchored so the static fallback
+     bleeds off the left edge too, instead of reading smaller than the version
+     most visitors see. */
+  left: -20vw;
+  transform: translate(0, -50%);
+  width: var(--sun-size, min(132vh, 88vw));
+  aspect-ratio: 1;
+}
+/* the live 3D sun — fixed to the viewport so it persists through the whole page;
+   starts at the hero's sun position, then docks to a small left-gutter presence
+   once the hero scrolls out of view. */
+.solar-pin {
+  position: fixed;
+  top: 50%;
+  /* left is the box's edge (not its center): anchored off-screen so the disc
+     bleeds past the left viewport edge instead of floating fully contained. */
+  left: -20vw;
+  width: var(--sun-size, min(132vh, 88vw));
+  aspect-ratio: 1;
+  transform: translate(0, -50%);
+  z-index: 3;
+  pointer-events: none;
+  transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1), left 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.5s ease;
+}
+/* gentle edge fade so the additive corona glow never cuts hard at the square
+   canvas boundary (the disc sits well within 85%, so it's untouched). */
+.solar-pin canvas {
+  -webkit-mask-image: radial-gradient(circle closest-side, #fff 0%, #fff 85%, transparent 100%);
+  mask-image: radial-gradient(circle closest-side, #fff 0%, #fff 85%, transparent 100%);
+}
+/* the sun stays large on the left through the ENTIRE page (consistent with
+   the hero) instead of shrinking to a corner badge. On wide screens the body
+   content sits in a right-biased column (.detail-solar .shell) so the sun keeps
+   the left side to itself; below that breakpoint the content returns to full
+   width, so the docked sun dims to an ambient glow behind it rather than
+   competing with the text. */
+.solar-pin.is-docked {
+  left: -20vw;
+  width: var(--sun-size, min(132vh, 88vw));
+  transform: translate(0, -50%);
+}
+/* Below the right-column width, body content is full-width, so the sun slides
+   further off the left edge and dims — it "sets" into a warm ambient glow on
+   the left rather than sitting as a disc behind the text. */
+@media (max-width: 1649px) {
+  .solar-pin.is-docked {
+    left: -40vw;
+    opacity: 0.6;
+  }
+}
+@media (max-width: 900px) {
+  .solar-pin:not(.is-docked) {
+    opacity: 0.42;
+  }
+}
+/* once the project article ends, fade the sun so it never bleeds over the
+   shared (cool-themed) site footer. Last so it wins over the states above. */
+.solar-pin.is-hidden {
+  opacity: 0;
+}
+.solar-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* screen-blend drops the black + a circular mask removes the square box edge */
+  mix-blend-mode: screen;
+  filter: saturate(1.08) contrast(1.05);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 48%, rgba(0, 0, 0, 0.5) 58%, transparent 66%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 48%, rgba(0, 0, 0, 0.5) 58%, transparent 66%);
+  animation: solar-breathe 9s ease-in-out infinite;
+}
+/* pulsing corona that bleeds across into the content (reduced-motion fallback only) */
+.solar-glow {
+  position: absolute;
+  top: 50%;
+  left: -20vw;
+  width: min(172vh, 115vw);
+  height: min(172vh, 115vw);
+  transform: translate(0, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background: radial-gradient(circle, rgba(255, 140, 45, 0.34) 0%, rgba(255, 95, 25, 0.16) 34%, rgba(255, 80, 20, 0.05) 52%, transparent 66%);
+  filter: blur(6px);
+  animation: solar-glow-pulse 8s ease-in-out infinite;
+}
+@keyframes solar-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.015); }
+}
+@keyframes solar-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes solar-glow-pulse {
+  0%, 100% { opacity: 0.82; transform: translate(0, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(0, -50%) scale(1.04); }
+}
+/* soft scrim so the text (right) stays readable while the sun glow still bleeds
+   through behind it — blends the sun INTO the text rather than a hard split */
+.solar-textscrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 0%, transparent 40%, rgba(8, 4, 2, 0.4) 64%, rgba(8, 4, 2, 0.62) 100%);
+}
+/* grain removed: it only overlaid the hero, lifting its background ~4 levels
+   above the (grain-less) sections below — which read as "top lighter, bottom
+   darker." Dropping it keeps the dark uniform top-to-bottom. */
+.solar-grain {
+  display: none;
+}
+.solar .hopx-bracket {
+  border-color: rgba(255, 150, 60, 0.5);
+}
+
+.solar-brief {
+  position: relative;
+  z-index: 4;
+  width: min(44rem, 48%);
+  /* right margin grows on ultrawide to park the brief against the centered
+     --hero-frame (not the viewport edge), so the title stops clipping and the
+     sun↔text gap stays bounded. Below ~1800px the base margin wins (unchanged). */
+  margin-right: max(clamp(1.5rem, 5vw, 5.5rem), (100vw - var(--hero-frame)) / 2);
+  padding: clamp(4rem, 9vh, 6.5rem) 0;
+  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.55);
+}
+.solar-kicker {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #ffb766;
+}
+.solar-title {
+  margin-top: 1rem;
+  font-family: var(--font-geist-mono), monospace;
+  font-weight: 700;
+  font-size: clamp(2rem, 4.4vw, 3.4rem);
+  line-height: 1.03;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: #fff4e6;
+  text-shadow: 0 0 28px rgba(255, 140, 50, 0.4);
+}
+.solar-lead {
+  margin-top: 1.05rem;
+  max-width: 31rem;
+  color: #d8c4ad;
+  font-size: 0.97rem;
+  line-height: 1.6;
+}
+.solar-obj {
+  margin-top: 1.6rem;
+  display: grid;
+  gap: 0.55rem;
+}
+.solar-obj-label {
+  color: #c79873;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.solar-step {
+  display: grid;
+  grid-template-columns: 1.7rem auto 1fr;
+  align-items: baseline;
+  gap: 0.7rem;
+  border-left: 1px solid rgba(255, 150, 60, 0.32);
+  padding-left: 0.8rem;
+}
+.solar-step span {
+  color: #ff9d3c;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+}
+.solar-step strong {
+  color: #fff1df;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.solar-step em {
+  color: #b9a488;
+  font-style: normal;
+  font-size: 0.76rem;
+}
+.solar-console {
+  margin-top: 1.6rem;
+  width: fit-content;
+  min-width: 20rem;
+  border: 1px solid rgba(255, 150, 60, 0.22);
+  border-radius: 10px;
+  background: rgba(20, 10, 4, 0.6);
+  padding: 0.85rem 1rem;
+}
+.solar-console-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid rgba(255, 150, 60, 0.16);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.solar-console-head span {
+  color: #b9a488;
+}
+.solar-console-head strong {
+  color: #ffb766;
+  font-weight: 700;
+}
+.solar-tele {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.3rem 0.9rem;
+  padding-top: 0.7rem;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+}
+.solar-tele span {
+  color: #b9a488;
+  text-transform: uppercase;
+}
+.solar-tele b {
+  color: #ffe6c6;
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.solar-tele-live {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  color: #ffb766 !important;
+}
+.solar-tele-live i {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: #ff8a2a;
+  box-shadow: 0 0 8px #ff8a2a;
+  animation: hopx-pulse 1.5s ease-in-out infinite;
+}
+.solar-cta {
+  margin-top: 1.7rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(255, 150, 60, 0.5);
+  border-radius: 6px;
+  background: rgba(255, 140, 50, 0.1);
+  padding: 0.7rem 1.2rem;
+  color: #fff1df;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+.solar-cta:hover {
+  background: rgba(255, 140, 50, 0.2);
+  box-shadow: 0 0 24px rgba(255, 140, 50, 0.3);
+}
+.solar-credit {
+  margin-top: 1rem;
+  font-size: 0.7rem;
+  color: rgba(216, 196, 173, 0.55);
+}
+.solar-credit a {
+  color: rgba(255, 183, 102, 0.75);
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 183, 102, 0.35);
+}
+.solar-credit a:hover {
+  color: #ffb766;
+}
+
+@media (max-width: 900px) {
+  .solar {
+    justify-content: center;
+    padding: 0 1.25rem;
+  }
+  .solar-stage {
+    opacity: 0.42;
+  }
+  .solar-textscrim {
+    background: linear-gradient(180deg, rgba(8, 4, 2, 0.5) 0%, rgba(8, 4, 2, 0.78) 60%, rgba(8, 4, 2, 0.92) 100%);
+  }
+  .solar-brief {
+    width: 100%;
+    margin-right: 0;
+  }
+  .solar-console {
+    min-width: 0;
+    width: auto;
   }
 }
 
@@ -1494,6 +1896,63 @@ input:focus-visible,
   height: 32rem;
   pointer-events: none;
   background: radial-gradient(60% 100% at 50% 0%, rgba(var(--accent-rgb), 0.12), transparent 70%);
+}
+
+/* ============================================================
+   SOLAR PROJECT — carry the hero's warm/amber palette through the
+   WHOLE page, not just the hero. The generic detail layout themes
+   itself off --accent + the bg/line tokens, so re-pointing those
+   (scoped to this one project) re-themes every card, kicker, badge,
+   spec-grid and rule at once — no per-component edits. Selector is
+   .detail.detail-solar so it outranks [data-domain="ai"]'s accent.
+   ============================================================ */
+.detail.detail-solar {
+  --accent: #ff9d3c;
+  --accent-rgb: 255, 157, 60;
+  /* one knob for the on-screen sun size — used by the live pin (hero + docked)
+     and the reduced-motion fallback so they never drift. The max() floor keeps
+     it large on short/wide viewports (where the vh term alone would shrink it
+     and leave a big empty middle). */
+  --sun-size: max(60vw, min(132vh, 88vw));
+  /* on ultrawide, content parks against this centered frame instead of the
+     viewport's right edge — stops the sun↔text gap growing without bound. */
+  --hero-frame: 100rem;
+  /* near-neutral near-black canvas: the warmth comes from the sun disc + amber
+     accents, NOT from a brown background (a warm-tinted bg read as "not dark"). */
+  --background: #060605;
+  --bg-1: #100d0b;
+  --bg-2: #141110;
+  --line: rgba(255, 180, 120, 0.1);
+  --line-2: rgba(255, 180, 120, 0.18);
+  --muted: #c9b8a6;
+  --muted-2: #908073;
+  /* ONE flat dark tone top-to-bottom (no vertical gradient — that read as
+     inconsistent) with a faint starfield over it for a space backdrop. Large
+     tile + low opacity so it never reads as a grid or makes cards noisy. */
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='760' height='760'%3E%3Cg fill='white'%3E%3Ccircle cx='40' cy='62' r='.9' opacity='.45'/%3E%3Ccircle cx='148' cy='30' r='.6' opacity='.35'/%3E%3Ccircle cx='243' cy='96' r='1' opacity='.55'/%3E%3Ccircle cx='330' cy='44' r='.5' opacity='.3'/%3E%3Ccircle cx='430' cy='118' r='.7' opacity='.45'/%3E%3Ccircle cx='525' cy='28' r='.9' opacity='.5'/%3E%3Ccircle cx='620' cy='84' r='.6' opacity='.35'/%3E%3Ccircle cx='712' cy='40' r='1.1' opacity='.6'/%3E%3Ccircle cx='70' cy='188' r='.7' opacity='.4'/%3E%3Ccircle cx='205' cy='162' r='.9' opacity='.5'/%3E%3Ccircle cx='300' cy='225' r='.5' opacity='.3'/%3E%3Ccircle cx='398' cy='180' r='.7' opacity='.45'/%3E%3Ccircle cx='505' cy='240' r='1' opacity='.55'/%3E%3Ccircle cx='600' cy='196' r='.6' opacity='.35'/%3E%3Ccircle cx='700' cy='250' r='.8' opacity='.45'/%3E%3Ccircle cx='38' cy='320' r='1' opacity='.55'/%3E%3Ccircle cx='160' cy='360' r='.6' opacity='.35'/%3E%3Ccircle cx='262' cy='328' r='.8' opacity='.45'/%3E%3Ccircle cx='360' cy='392' r='.6' opacity='.35'/%3E%3Ccircle cx='470' cy='344' r='.9' opacity='.5'/%3E%3Ccircle cx='572' cy='404' r='.5' opacity='.3'/%3E%3Ccircle cx='668' cy='352' r='1' opacity='.55'/%3E%3Ccircle cx='92' cy='470' r='.7' opacity='.4'/%3E%3Ccircle cx='198' cy='520' r='.9' opacity='.5'/%3E%3Ccircle cx='300' cy='484' r='.5' opacity='.3'/%3E%3Ccircle cx='408' cy='544' r='.8' opacity='.45'/%3E%3Ccircle cx='520' cy='500' r='.6' opacity='.35'/%3E%3Ccircle cx='628' cy='560' r='.9' opacity='.5'/%3E%3Ccircle cx='722' cy='510' r='.6' opacity='.35'/%3E%3Ccircle cx='52' cy='628' r='.8' opacity='.45'/%3E%3Ccircle cx='168' cy='682' r='.6' opacity='.35'/%3E%3Ccircle cx='278' cy='642' r='1' opacity='.55'/%3E%3Ccircle cx='382' cy='704' r='.6' opacity='.35'/%3E%3Ccircle cx='498' cy='662' r='.7' opacity='.4'/%3E%3Ccircle cx='602' cy='722' r='.9' opacity='.5'/%3E%3Ccircle cx='708' cy='668' r='.6' opacity='.35'/%3E%3C/g%3E%3C/svg%3E"),
+    #060605;
+}
+/* the shared top aura is a top-only warm cap, which breaks the uniform dark —
+   remove it on the solar page (the sun is the warm focal point, not this). */
+.detail-solar .detail-aura {
+  display: none;
+}
+/* Wide screens: mirror the hero's split for the whole page — all body content
+   moves into a right-biased column so the persistent sun owns the left side.
+   Below this width a right column would cramp the dense 4-/5-up grids, so
+   content returns to the normal centered shell and the sun dims behind it. */
+/* prefers-reduced-motion gets no persistent sun (SolarPin renders nothing), so
+   the right column would be an orphan beside an empty left half — only apply it
+   when the sun is actually there to fill the left. */
+@media (min-width: 1650px) and (prefers-reduced-motion: no-preference) {
+  .detail-solar .shell {
+    max-width: 52rem;
+    margin-left: auto;
+    /* same centered-frame cap as the hero brief, so the sections rebalance the
+       same way on ultrawide (right edges align, gap stays bounded). */
+    margin-right: max(clamp(2rem, 6vw, 6rem), (100vw - var(--hero-frame)) / 2);
+  }
 }
 
 .detail-back {

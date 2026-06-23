@@ -353,12 +353,19 @@ function makeGlowTexture() {
 function Sun({
   position,
   texture,
+  bodyRef,
+  onActivate,
+  onHover,
 }: {
   position: [number, number, number];
   texture: Texture;
+  bodyRef?: React.RefObject<Group | null>;
+  onActivate?: () => void;
+  onHover?: (v: boolean) => void;
 }) {
   const glow = useMemo(() => makeGlowTexture(), []);
   const glareRef = useRef<Group>(null);
+  const downRef = useRef<{ x: number; y: number } | null>(null);
 
   useFrame((state) => {
     if (glareRef.current) {
@@ -368,12 +375,40 @@ function Sun({
   });
 
   return (
-    <group position={position}>
+    <group position={position} ref={bodyRef}>
       {/* real photospheric surface */}
       <mesh>
         <sphereGeometry args={[0.13, 48, 48]} />
         <meshBasicMaterial map={texture} toneMapped={false} />
       </mesh>
+      {/* invisible hit area — click the sun to launch the solar-research case study */}
+      {onActivate ? (
+        <mesh
+          onPointerDown={(event) => {
+            event.stopPropagation();
+            downRef.current = { x: event.clientX, y: event.clientY };
+          }}
+          onPointerUp={(event) => {
+            event.stopPropagation();
+            const start = downRef.current;
+            downRef.current = null;
+            if (!start) return;
+            if (Math.hypot(event.clientX - start.x, event.clientY - start.y) < 8) onActivate();
+          }}
+          onPointerOver={(event) => {
+            event.stopPropagation();
+            onHover?.(true);
+            document.body.style.cursor = "pointer";
+          }}
+          onPointerOut={() => {
+            onHover?.(false);
+            document.body.style.cursor = "";
+          }}
+        >
+          <sphereGeometry args={[0.6, 16, 16]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+      ) : null}
       {/* glare - camera-facing sprites so it stays consistent at any angle */}
       <group ref={glareRef}>
         <sprite scale={[1.7, 1.7, 1]}>
@@ -430,11 +465,17 @@ function LiveEarth({
   hopeBodyRef,
   onHopeActivate,
   onHopeHover,
+  sunBodyRef,
+  onSunActivate,
+  onSunHover,
 }: {
   compact: boolean;
   hopeBodyRef: React.RefObject<Group | null>;
   onHopeActivate: () => void;
   onHopeHover: (v: boolean) => void;
+  sunBodyRef: React.RefObject<Group | null>;
+  onSunActivate: () => void;
+  onSunHover: (v: boolean) => void;
 }) {
   const groupRef = useRef<Group>(null);
   const cloudsRef = useRef<Mesh>(null);
@@ -539,7 +580,13 @@ function LiveEarth({
 
       {/* The sun (procedural plasma) at the real sub-solar direction - the
           earth's day/night adapts to it - and an orbiting cratered moon. */}
-      <Sun position={[sunVec[0] * 4.7, sunVec[1] * 4.7, sunVec[2] * 4.7]} texture={textures.sun} />
+      <Sun
+        position={[sunVec[0] * 4.7, sunVec[1] * 4.7, sunVec[2] * 4.7]}
+        texture={textures.sun}
+        bodyRef={sunBodyRef}
+        onActivate={onSunActivate}
+        onHover={onSunHover}
+      />
       <Moon texture={textures.moon} />
 
       <mesh>
@@ -682,11 +729,14 @@ function HopeSatellite({
   );
 }
 
-/** When active, dollies the camera toward the HOPE satellite (it keeps orbiting) for the launch zoom. */
-function LaunchDolly({ active, targetRef }: { active: boolean; targetRef: React.RefObject<Group | null> }) {
+/** When active, dollies the camera toward the target for the launch zoom.
+ *  `orbit` adds a lateral/vertical arc so it swoops AROUND the target (the Sun). */
+function LaunchDolly({ active, targetRef, orbit = false }: { active: boolean; targetRef: React.RefObject<Group | null>; orbit?: boolean }) {
   const target = useMemo(() => new Vector3(), []);
   const dir = useMemo(() => new Vector3(), []);
   const desired = useMemo(() => new Vector3(), []);
+  const tangent = useMemo(() => new Vector3(), []);
+  const UP = useMemo(() => new Vector3(0, 1, 0), []);
   const prog = useRef(0);
 
   useFrame((state, delta) => {
@@ -700,8 +750,15 @@ function LaunchDolly({ active, targetRef }: { active: boolean; targetRef: React.
     const p = prog.current * prog.current;
     targetRef.current.getWorldPosition(target);
     dir.copy(target).sub(state.camera.position).normalize();
-    const standoff = 0.46 - 0.4 * p; // 0.46 → 0.06: dives right up to the sat
+    const standoff = 0.46 - 0.4 * p; // 0.46 → 0.06: dives right up to the target
     desired.copy(target).sub(dir.multiplyScalar(standoff));
+    if (orbit) {
+      // swoop sideways + up as we approach, then settle — a "zoom and orbit"
+      const arc = Math.sin(prog.current * Math.PI);
+      tangent.crossVectors(dir, UP).normalize();
+      desired.addScaledVector(tangent, arc * 1.1);
+      desired.addScaledVector(UP, Math.sin(prog.current * Math.PI * 0.8) * 0.4);
+    }
     state.camera.position.lerp(desired, 0.04 + 0.26 * p);
     state.camera.lookAt(target);
   });
@@ -712,18 +769,28 @@ function OrbitScene({
   compact,
   frameloop,
   launching,
+  launchTargetRef,
+  launchOrbit,
   dpr,
   hopeBodyRef,
   onHopeActivate,
   onHopeHover,
+  sunBodyRef,
+  onSunActivate,
+  onSunHover,
 }: {
   compact: boolean;
   frameloop: "always" | "demand";
   launching: boolean;
+  launchTargetRef: React.RefObject<Group | null>;
+  launchOrbit: boolean;
   dpr: number;
   hopeBodyRef: React.RefObject<Group | null>;
   onHopeActivate: () => void;
   onHopeHover: (v: boolean) => void;
+  sunBodyRef: React.RefObject<Group | null>;
+  onSunActivate: () => void;
+  onSunHover: (v: boolean) => void;
 }) {
   return (
     <Canvas
@@ -736,7 +803,7 @@ function OrbitScene({
           show on the day side and correctly vanish into the night side. */}
       <ambientLight intensity={0.02} />
       {!compact ? <CameraParallax paused={launching} /> : null}
-      <LaunchDolly active={launching} targetRef={hopeBodyRef} />
+      <LaunchDolly active={launching} targetRef={launchTargetRef} orbit={launchOrbit} />
       <StarField compact={compact} />
       {!compact ? [0, 1, 2, 3].map((i) => <Meteor key={i} seed={i * 97 + 5} />) : null}
       <LiveEarth
@@ -744,6 +811,9 @@ function OrbitScene({
         hopeBodyRef={hopeBodyRef}
         onHopeActivate={onHopeActivate}
         onHopeHover={onHopeHover}
+        sunBodyRef={sunBodyRef}
+        onSunActivate={onSunActivate}
+        onSunHover={onSunHover}
       />
       {!compact ? (
         <EffectComposer>
@@ -865,12 +935,16 @@ export function SpaceHero() {
 
   const router = useRouter();
   const hopeBodyRef = useRef<Group>(null);
+  const sunBodyRef = useRef<Group>(null);
   const launchTimers = useRef<number[]>([]);
   const [phase, setPhase] = useState<"idle" | "zoom" | "warp">("idle");
   const [hopeHover, setHopeHover] = useState(false);
+  const [sunHover, setSunHover] = useState(false);
+  const [launchKind, setLaunchKind] = useState<"hope" | "sun">("hope");
 
   useEffect(() => {
     router.prefetch?.("/projects/cubesat-telemetry-pcb");
+    router.prefetch?.("/projects/solar-cycle-prediction");
     // warm the heavy assets the case study needs (PCB model + hi-res clouds) so
     // they're cached and ready by the time the launch transition lands.
     const links = ["/pcb/hope_PCB_opt.glb", "/earth/earth_clouds_hi.png"].map((href) => {
@@ -889,26 +963,30 @@ export function SpaceHero() {
     };
   }, [router]);
 
-  const launch = () => {
+  const launch = (kind: "hope" | "sun") => {
     if (phase !== "idle") return;
+    const dest =
+      kind === "sun" ? "/projects/solar-cycle-prediction" : "/projects/cubesat-telemetry-pcb";
     if (reduceMotion) {
-      router.push("/projects/cubesat-telemetry-pcb");
+      router.push(dest);
       return;
     }
+    setLaunchKind(kind);
     setPhase("zoom");
     launchTimers.current.push(
       window.setTimeout(() => setPhase("warp"), 1300),
       window.setTimeout(() => {
         try {
-          sessionStorage.setItem("hope:arrival", "1");
+          sessionStorage.setItem(kind === "sun" ? "solar:arrival" : "hope:arrival", "1");
         } catch {
           /* sessionStorage may be unavailable */
         }
-        router.push("/projects/cubesat-telemetry-pcb?from=orbit");
+        router.push(`${dest}?from=${kind === "sun" ? "sun" : "orbit"}`);
       }, 1760),
     );
   };
 
+  const launchTargetRef = launchKind === "sun" ? sunBodyRef : hopeBodyRef;
   const frameloop: "always" | "demand" =
     phase !== "idle" || (!reduceMotion && inView) ? "always" : "demand";
 
@@ -925,10 +1003,15 @@ export function SpaceHero() {
               compact={compact}
               frameloop={frameloop}
               launching={phase !== "idle"}
+              launchTargetRef={launchTargetRef}
+              launchOrbit={launchKind === "sun"}
               dpr={compact ? 1 : dpr}
               hopeBodyRef={hopeBodyRef}
-              onHopeActivate={launch}
+              onHopeActivate={() => launch("hope")}
               onHopeHover={setHopeHover}
+              sunBodyRef={sunBodyRef}
+              onSunActivate={() => launch("sun")}
+              onSunHover={setSunHover}
             />
           </CanvasErrorBoundary>
         </div>
@@ -942,7 +1025,15 @@ export function SpaceHero() {
           HOPE · CubeSat asset — click to open
         </div>
       ) : null}
-      {phase !== "idle" ? <div className={`hero-warp hero-warp-${phase}`} aria-hidden="true" /> : null}
+      {sunHover && phase === "idle" ? (
+        <div className="hope-hint sun-hint" aria-hidden="true">
+          <SunMedium size={13} />
+          The Sun · Solar-cycle research — click to open
+        </div>
+      ) : null}
+      {phase !== "idle" ? (
+        <div className={`hero-warp hero-warp-${phase} ${launchKind === "sun" ? "is-sun" : ""}`} aria-hidden="true" />
+      ) : null}
 
       <div className="hero-shell relative z-10 w-full">
         <motion.div
@@ -1021,18 +1112,23 @@ export function SpaceHero() {
               </a>
             </Magnetic>
           </motion.div>
-          <motion.button
-            type="button"
-            onClick={launch}
-            className="hero-mission-cue mt-6"
+          <motion.div
             initial={reduceMotion ? false : { opacity: 0 }}
             animate={reduceMotion ? undefined : { opacity: 1 }}
             transition={{ delay: 0.78, duration: 0.5 }}
+            className="mt-6 flex flex-col gap-2"
           >
-            <span className="hero-mission-dot" aria-hidden="true" />
-            Click the amber satellite to enter Operation HOPE
-            <ArrowUpRight size={14} />
-          </motion.button>
+            <button type="button" onClick={() => launch("hope")} className="hero-mission-cue">
+              <span className="hero-mission-dot" aria-hidden="true" />
+              Click the amber satellite to enter Operation HOPE
+              <ArrowUpRight size={14} />
+            </button>
+            <button type="button" onClick={() => launch("sun")} className="hero-mission-cue hero-sun-cue">
+              <span className="hero-mission-dot hero-sun-dot" aria-hidden="true" />
+              Click the Sun for solar-cycle research
+              <ArrowUpRight size={14} />
+            </button>
+          </motion.div>
           <motion.div
             initial={reduceMotion ? false : { opacity: 0 }}
             animate={reduceMotion ? undefined : { opacity: 1 }}
