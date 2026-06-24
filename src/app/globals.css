@@ -1913,10 +1913,11 @@ input:focus-visible,
      and the reduced-motion fallback so they never drift. The max() floor keeps
      it large on short/wide viewports (where the vh term alone would shrink it
      and leave a big empty middle). */
-  --sun-size: max(60vw, min(132vh, 88vw));
-  /* on ultrawide, content parks against this centered frame instead of the
-     viewport's right edge — stops the sun↔text gap growing without bound. */
-  --hero-frame: 100rem;
+  --sun-size: max(70vw, min(132vh, 88vw));
+  /* content sits at the right margin (uses the right side); the wide middle is
+     filled by the larger sun + its glow + the erupting flares, so it doesn't
+     read as an empty gap. (Large value ⇒ the centered-frame cap stays off.) */
+  --hero-frame: 150rem;
   /* near-neutral near-black canvas: the warmth comes from the sun disc + amber
      accents, NOT from a brown background (a warm-tinted bg read as "not dark"). */
   --background: #060605;
@@ -1952,6 +1953,326 @@ input:focus-visible,
     /* same centered-frame cap as the hero brief, so the sections rebalance the
        same way on ultrawide (right edges align, gap stays bounded). */
     margin-right: max(clamp(2rem, 6vw, 6rem), (100vw - var(--hero-frame)) / 2);
+  }
+}
+
+/* all solar-page body content sits ABOVE the fixed sun (z-index 3) so the sun
+   reads as a backdrop BEHIND the text, never painting over it. */
+.detail-solar .shell {
+  position: relative;
+  z-index: 4;
+}
+
+/* ============================================================
+   SOLAR RESEARCH WRITE-UP — long-form report on the solar page.
+   Inherits the warm .detail-solar palette (amber accent, warm bg).
+   ============================================================ */
+.research {
+  max-width: 54rem;
+  /* keep prose readable where it sits over the sun's glow */
+  text-shadow: 0 2px 22px rgba(0, 0, 0, 0.6);
+}
+.research-title {
+  margin-top: 1.4rem;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: clamp(1.9rem, 3.2vw, 2.7rem);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: #fff4e6;
+  text-shadow: 0 0 26px rgba(255, 140, 50, 0.28);
+}
+.research-sub {
+  margin-top: 0.7rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.research-status {
+  display: flex;
+  gap: 0.7rem;
+  margin-top: 1.4rem;
+  padding: 0.9rem 1.05rem;
+  border: 1px solid rgba(var(--accent-rgb), 0.28);
+  border-left-width: 2px;
+  border-radius: 10px;
+  background: rgba(var(--accent-rgb), 0.06);
+}
+.research-status-dot {
+  flex: none;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: 0.45rem;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.9);
+}
+.research-status p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+.research-status em {
+  color: #fff1df;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.research-section {
+  margin-top: 3rem;
+}
+.research-head-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1.2rem;
+}
+.research-index {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+}
+.research-h {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #fff;
+}
+.research-rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.45), transparent);
+}
+
+.research-body p {
+  margin-top: 1rem;
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: 0.97rem;
+  line-height: 1.68;
+}
+.research-body strong {
+  color: #f4e8d8;
+  font-weight: 650;
+}
+.research-body em {
+  color: #ffce9c;
+  font-style: italic;
+}
+
+.research-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+  margin-top: 1.2rem;
+}
+.research-card {
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-1);
+}
+.research-card span {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.research-card p {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  max-width: none;
+}
+
+.research-step {
+  display: grid;
+  grid-template-columns: 2.4rem 1fr;
+  gap: 0.9rem;
+  margin-top: 1.8rem;
+}
+.research-step-n {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+  opacity: 0.85;
+}
+.research-step-body h4 {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fff;
+}
+.research-step-body p {
+  margin-top: 0.55rem;
+}
+
+.research-eq {
+  margin: 1.1rem 0;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(var(--accent-rgb), 0.18);
+  background: rgba(255, 255, 255, 0.02);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.95rem;
+  color: #ffe1bf;
+  text-align: center;
+  overflow-x: auto;
+}
+
+.research-table {
+  width: 100%;
+  margin-top: 1.1rem;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+.research-table th,
+.research-table td {
+  text-align: left;
+  padding: 0.55rem 0.7rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.research-table th {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+.research-table td {
+  color: var(--muted);
+}
+.research-table td:first-child {
+  font-family: var(--font-geist-mono), monospace;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.research-fig {
+  margin: 1.6rem 0;
+}
+.research-fig-frame {
+  border-radius: 12px;
+  overflow: hidden;
+}
+.research-fig-ph {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  aspect-ratio: 16 / 8;
+  border: 1px dashed rgba(var(--accent-rgb), 0.3);
+  border-radius: 12px;
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.015) 0 12px, transparent 12px 24px),
+    var(--bg-1);
+}
+.research-fig.is-wide .research-fig-ph {
+  aspect-ratio: 16 / 5;
+}
+.research-fig-ph-label {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(var(--accent-rgb), 0.75);
+}
+.research-fig-ph-file {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.72rem;
+  color: var(--muted-2);
+  background: rgba(0, 0, 0, 0.25);
+  padding: 0.15rem 0.5rem;
+  border-radius: 5px;
+}
+.research-fig-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+}
+.research-fig figcaption {
+  margin-top: 0.6rem;
+  color: var(--muted-2);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.research-fig figcaption strong {
+  color: var(--accent);
+  font-weight: 600;
+}
+.research-fig-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.research-fig-pair .research-fig-ph {
+  aspect-ratio: 4 / 3;
+}
+
+.research-list {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.6rem;
+}
+.research-list li {
+  position: relative;
+  padding-left: 1.1rem;
+  max-width: 64ch;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.62;
+}
+.research-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.research-list strong {
+  color: #f4e8d8;
+  font-weight: 650;
+}
+.research-next-label {
+  margin-top: 1.4rem;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.research-stack {
+  margin-top: 1.3rem;
+  color: var(--muted-2);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+.research-stack strong {
+  color: var(--muted);
+}
+
+@media (max-width: 720px) {
+  .research-cards,
+  .research-fig-pair {
+    grid-template-columns: 1fr;
   }
 }
 

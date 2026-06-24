@@ -7,6 +7,7 @@ import { BoardSectionTabs } from "./board-section-tabs";
 import { HopeMissionIntro } from "./hope-mission-intro";
 import { SolarIntro } from "./solar-intro";
 import { SolarPin } from "./solar-pin";
+import { SolarResearch } from "./solar-research";
 import { ArrivalFlash } from "./arrival-flash";
 
 const statusLabels = {
@@ -182,9 +183,15 @@ export function ProjectDetail({
       </div>
 
       <div className="shell relative pb-8">
-        <ProblemSolution project={project} />
-        <BoardSections project={project} />
-        <ArchitectureDiagram project={project} />
+        {isSolar ? (
+          <SolarResearch />
+        ) : (
+          <>
+            <ProblemSolution project={project} />
+            <BoardSections project={project} />
+            <ArchitectureDiagram project={project} />
+          </>
+        )}
       </div>
 
       {showcase ? <PcbShowcase /> : null}

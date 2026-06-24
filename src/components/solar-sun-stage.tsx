@@ -2,8 +2,8 @@
 
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AdditiveBlending, CanvasTexture, ShaderMaterial } from "three";
-import type { Mesh } from "three";
+import { AdditiveBlending, CanvasTexture, Color, MeshBasicMaterial, PlaneGeometry, ShaderMaterial } from "three";
+import type { Group, Mesh } from "three";
 import { CanvasErrorBoundary } from "./canvas-error-boundary";
 
 // A custom GLSL "flowing plasma" sun: a sphere whose surface is domain-warped
@@ -89,8 +89,8 @@ const fragmentShader = /* glsl */ `
     float v = clamp(n + detail, 0.0, 1.0);
 
     // fire / plasma color ramp
-    vec3 col = vec3(0.22, 0.025, 0.0);
-    col = mix(col, vec3(0.85, 0.17, 0.0), smoothstep(0.22, 0.5, v));
+    vec3 col = vec3(0.34, 0.05, 0.008); // glowing deep red (valleys glow, not black)
+    col = mix(col, vec3(0.92, 0.22, 0.012), smoothstep(0.24, 0.5, v));
     col = mix(col, vec3(1.0, 0.5, 0.07), smoothstep(0.45, 0.68, v));
     col = mix(col, vec3(1.0, 0.82, 0.32), smoothstep(0.66, 0.85, v));
     col = mix(col, vec3(1.0, 0.96, 0.86), smoothstep(0.86, 0.97, v)); // white-hot
@@ -99,7 +99,7 @@ const fragmentShader = /* glsl */ `
     float fres = pow(1.0 - max(dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0), 2.5);
     col += vec3(1.0, 0.46, 0.16) * fres * 0.75;
 
-    col *= 1.25;
+    col *= 1.3;
     gl_FragColor = vec4(col, 1.0);
   }
 `;
@@ -139,6 +139,123 @@ function GlowHalo() {
       <planeGeometry args={[5, 5]} />
       <meshBasicMaterial map={tex} transparent blending={AdditiveBlending} depthWrite={false} toneMapped={false} />
     </mesh>
+  );
+}
+
+// Solar flares — a SEPARATE, removable layer (not parented to the spinning
+// sphere, so they stay anchored to the visible limb). Bright additive jets that
+// erupt outward and recede on staggered cycles, biased to the upper/lower right
+// limb (into the gap, clear of the off-screen left and the text column).
+type FlareDef = { angle: number; w: number; h: number; period: number; phase: number };
+
+// varied lengths/widths so they don't read as uniform spokes
+const FLARES: FlareDef[] = [
+  { angle: 68, w: 0.34, h: 1.25, period: 7.0, phase: 0.0 },
+  { angle: 46, w: 0.5, h: 0.82, period: 5.4, phase: 0.55 },
+  { angle: 20, w: 0.3, h: 1.12, period: 6.6, phase: 0.25 },
+  { angle: -24, w: 0.46, h: 0.92, period: 7.4, phase: 0.7 },
+  { angle: -50, w: 0.33, h: 1.18, period: 6.0, phase: 0.38 },
+];
+
+const FLARE_BASE = 1.5; // root radius — just inside the sphere limb (radius 1.6)
+
+// a hot fiery jet: saturated gold-white core → orange → red, fading to nothing.
+// Saturated (not cream/white) so additive over the dark page reads as fire, not
+// a beige streak; heavy blur makes the edges glow like gas.
+function makeFlareTexture() {
+  const size = 256;
+  const c = document.createElement("canvas");
+  c.width = size;
+  c.height = size;
+  const g = c.getContext("2d");
+  if (g) {
+    g.filter = "blur(14px)";
+    const grad = g.createLinearGradient(0, size, 0, 0);
+    grad.addColorStop(0, "rgba(255, 232, 150, 1)"); // saturated gold-white core
+    grad.addColorStop(0.32, "rgba(255, 140, 42, 0.92)"); // orange body
+    grad.addColorStop(0.66, "rgba(255, 74, 24, 0.45)"); // red-orange
+    grad.addColorStop(1, "rgba(214, 44, 14, 0)"); // deep red tip
+    g.fillStyle = grad;
+    g.beginPath();
+    g.moveTo(size * 0.5, size * 0.04);
+    g.quadraticCurveTo(size * 0.8, size * 0.55, size * 0.5, size * 0.98);
+    g.quadraticCurveTo(size * 0.2, size * 0.55, size * 0.5, size * 0.04);
+    g.closePath();
+    g.fill();
+  }
+  return new CanvasTexture(c);
+}
+
+function SolarFlares() {
+  const tex = useMemo(() => makeFlareTexture(), []);
+  const groups = useRef<(Group | null)[]>([]);
+  // each flare = a bright core jet + a wider, softer, oranger glow under it, so
+  // it reads as glowing plasma rather than a flat ribbon. Both base-anchored so
+  // they erupt outward from the limb; not parented to the spinning sphere.
+  const flares = useMemo(
+    () =>
+      FLARES.map((f) => {
+        const th = (f.angle * Math.PI) / 180;
+        const core = new PlaneGeometry(f.w, f.h);
+        core.translate(0, f.h / 2, 0);
+        const glow = new PlaneGeometry(f.w * 2.4, f.h * 1.02);
+        glow.translate(0, (f.h * 1.02) / 2, 0);
+        const matOpts = {
+          map: tex,
+          transparent: true,
+          opacity: 0,
+          blending: AdditiveBlending,
+          depthWrite: false,
+          depthTest: false,
+          toneMapped: false,
+        } as const;
+        const coreMat = new MeshBasicMaterial(matOpts);
+        const glowMat = new MeshBasicMaterial({ ...matOpts, color: new Color("#ff7e2e") });
+        return {
+          core,
+          glow,
+          coreMat,
+          glowMat,
+          rot: th - Math.PI / 2,
+          bx: FLARE_BASE * Math.cos(th),
+          by: FLARE_BASE * Math.sin(th),
+        };
+      }),
+    [tex],
+  );
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    // shorten flares on narrower viewports so their tips never reach the text
+    // column (the sun↔content gap shrinks as the screen narrows).
+    const vw = typeof window !== "undefined" ? window.innerWidth : 1920;
+    const lenScale = Math.max(0.5, Math.min(1, (vw - 1450) / 650));
+    for (let i = 0; i < flares.length; i++) {
+      const grp = groups.current[i];
+      if (!grp) continue;
+      const f = FLARES[i];
+      const phase = (t / f.period + f.phase) % 1;
+      const env = Math.pow(Math.sin(phase * Math.PI), 0.7); // erupt + recede
+      grp.scale.set(1, (0.1 + env) * lenScale, 1);
+      flares[i].coreMat.opacity = env * 0.95;
+      flares[i].glowMat.opacity = env * 0.4;
+    }
+  });
+  return (
+    <group>
+      {flares.map((fl, i) => (
+        <group
+          key={i}
+          ref={(el) => {
+            groups.current[i] = el;
+          }}
+          position={[fl.bx, fl.by, 0.1]}
+          rotation={[0, 0, fl.rot]}
+        >
+          <mesh geometry={fl.glow} material={fl.glowMat} />
+          <mesh geometry={fl.core} material={fl.coreMat} />
+        </group>
+      ))}
+    </group>
   );
 }
 
@@ -183,6 +300,7 @@ export function SolarSunStage() {
       >
         <GlowHalo />
         <SunPlasma />
+        <SolarFlares />
       </Canvas>
     </CanvasErrorBoundary>
   );
