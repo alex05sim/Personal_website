@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import SunCalc from "suncalc";
-import type { Group, Mesh, MeshBasicMaterial, Points, Texture } from "three";
+import type { Group, Mesh, MeshBasicMaterial, PerspectiveCamera, Points, Texture } from "three";
 import {
   AdditiveBlending,
   CanvasTexture,
@@ -462,6 +462,7 @@ function Moon({ texture }: { texture: Texture }) {
 
 function LiveEarth({
   compact,
+  launching,
   hopeBodyRef,
   onHopeActivate,
   onHopeHover,
@@ -470,6 +471,7 @@ function LiveEarth({
   onSunHover,
 }: {
   compact: boolean;
+  launching: boolean;
   hopeBodyRef: React.RefObject<Group | null>;
   onHopeActivate: () => void;
   onHopeHover: (v: boolean) => void;
@@ -617,7 +619,7 @@ function LiveEarth({
         <Satellite key={index} {...satellite} />
       ))}
 
-      <HopeSatellite bodyRef={hopeBodyRef} onActivate={onHopeActivate} onHover={onHopeHover} />
+      <HopeSatellite bodyRef={hopeBodyRef} onActivate={onHopeActivate} onHover={onHopeHover} launching={launching} />
     </group>
   );
 }
@@ -637,19 +639,46 @@ function HopeSatellite({
   bodyRef,
   onActivate,
   onHover,
+  launching,
 }: {
   bodyRef: React.RefObject<Group | null>;
   onActivate: () => void;
   onHover: (v: boolean) => void;
+  launching: boolean;
 }) {
   const orbitRef = useRef<Group>(null);
   const reticleRef = useRef<Group>(null);
   const downRef = useRef<{ x: number; y: number } | null>(null);
   const radius = 1.34;
 
-  useFrame((state) => {
-    if (orbitRef.current) orbitRef.current.rotation.y = state.clock.elapsedTime * 0.16 + 2.1;
-    if (reticleRef.current) reticleRef.current.rotation.z = state.clock.elapsedTime * 0.6;
+  // Launch "lock-on": the sat's orbital motion brakes to a stop (so the camera
+  // approaches a stationary target instead of chasing one), and the reticle
+  // gives a quick target-acquired flick, expanding as we close in.
+  const orbitAngle = useRef(2.1);
+  const orbitSpeed = useRef(0.16);
+  const reticleAngle = useRef(0);
+  const reticleKick = useRef(0);
+  const reticleScale = useRef(1);
+
+  useFrame((state, delta) => {
+    if (!launching) {
+      orbitAngle.current = state.clock.elapsedTime * 0.16 + 2.1;
+      orbitSpeed.current = 0.16;
+      reticleAngle.current = state.clock.elapsedTime * 0.6;
+      reticleKick.current = 3.4; // primed for the next launch
+      reticleScale.current = 1;
+    } else {
+      orbitSpeed.current *= Math.exp(-delta * 3.4); // brake to a halt
+      orbitAngle.current += orbitSpeed.current * delta;
+      reticleKick.current *= Math.exp(-delta * 2.8); // spin flick, then freeze
+      reticleAngle.current += reticleKick.current * delta;
+      reticleScale.current = Math.min(2.1, reticleScale.current + delta * 1.5);
+    }
+    if (orbitRef.current) orbitRef.current.rotation.y = orbitAngle.current;
+    if (reticleRef.current) {
+      reticleRef.current.rotation.z = reticleAngle.current;
+      reticleRef.current.scale.setScalar(reticleScale.current);
+    }
   });
 
   const ticks = [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2];
@@ -738,29 +767,45 @@ function LaunchDolly({ active, targetRef, orbit = false }: { active: boolean; ta
   const tangent = useMemo(() => new Vector3(), []);
   const UP = useMemo(() => new Vector3(0, 1, 0), []);
   const prog = useRef(0);
+  const baseFov = useRef<number | null>(null);
 
   useFrame((state, delta) => {
+    const cam = state.camera as PerspectiveCamera;
     if (!active) {
       prog.current = 0;
+      if (baseFov.current !== null) {
+        cam.fov = baseFov.current;
+        cam.updateProjectionMatrix();
+        baseFov.current = null;
+      }
       return;
     }
     if (!targetRef.current) return;
-    // accelerate into the asset (ease-in) and push closer as we go — reads as a launch
-    prog.current = Math.min(1, prog.current + delta / 1.6);
-    const p = prog.current * prog.current;
+    if (baseFov.current === null) baseFov.current = cam.fov;
+
+    // Eased approach: gentle start (lock-on beat), committed middle, soft
+    // arrival — no terminal dive. The warp overlay sells the final jump.
+    prog.current = Math.min(1, prog.current + delta / 1.85);
+    const t = prog.current;
+    const p = t * t * (3 - 2 * t); // smoothstep
+
     targetRef.current.getWorldPosition(target);
     dir.copy(target).sub(state.camera.position).normalize();
-    const standoff = 0.46 - 0.4 * p; // 0.46 → 0.06: dives right up to the target
+    const standoff = 0.5 - 0.34 * p; // 0.5 → 0.16: close, but never inside it
     desired.copy(target).sub(dir.multiplyScalar(standoff));
-    if (orbit) {
-      // swoop sideways + up as we approach, then settle — a "zoom and orbit"
-      const arc = Math.sin(prog.current * Math.PI);
-      tangent.crossVectors(dir, UP).normalize();
-      desired.addScaledVector(tangent, arc * 1.1);
-      desired.addScaledVector(UP, Math.sin(prog.current * Math.PI * 0.8) * 0.4);
-    }
-    state.camera.position.lerp(desired, 0.04 + 0.26 * p);
+    // both launches bank through a lateral arc; the Sun's is a full swoop
+    const arcScale = orbit ? 1.1 : 0.34;
+    const arc = Math.sin(t * Math.PI);
+    tangent.crossVectors(dir, UP).normalize();
+    desired.addScaledVector(tangent, arc * arcScale);
+    desired.addScaledVector(UP, Math.sin(t * Math.PI * 0.8) * (orbit ? 0.4 : 0.16));
+
+    state.camera.position.lerp(desired, 0.05 + 0.2 * p);
     state.camera.lookAt(target);
+    // lens punch: the FOV tightens as we commit — speed you can feel without
+    // the geometry blowing past the near plane
+    cam.fov = baseFov.current - 9 * p;
+    cam.updateProjectionMatrix();
   });
   return null;
 }
@@ -808,6 +853,7 @@ function OrbitScene({
       {!compact ? [0, 1, 2, 3].map((i) => <Meteor key={i} seed={i * 97 + 5} />) : null}
       <LiveEarth
         compact={compact}
+        launching={launching}
         hopeBodyRef={hopeBodyRef}
         onHopeActivate={onHopeActivate}
         onHopeHover={onHopeHover}
@@ -974,7 +1020,7 @@ export function SpaceHero() {
     setLaunchKind(kind);
     setPhase("zoom");
     launchTimers.current.push(
-      window.setTimeout(() => setPhase("warp"), 1300),
+      window.setTimeout(() => setPhase("warp"), 1700),
       window.setTimeout(() => {
         try {
           sessionStorage.setItem(kind === "sun" ? "solar:arrival" : "hope:arrival", "1");
@@ -982,7 +1028,7 @@ export function SpaceHero() {
           /* sessionStorage may be unavailable */
         }
         router.push(`${dest}?from=${kind === "sun" ? "sun" : "orbit"}`);
-      }, 1760),
+      }, 2250),
     );
   };
 
