@@ -2770,11 +2770,23 @@ input:focus-visible,
 
 .recommendation-form {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   gap: 0.7rem;
   max-width: 32rem;
 }
-.recommendation-form input {
+.recommendation-field { position: relative; min-width: 0; }
+.recommendation-field svg {
+  position: absolute;
+  top: 50%;
+  left: 1rem;
+  z-index: 1;
+  transform: translateY(-50%);
+  color: var(--muted-2);
+  pointer-events: none;
+}
+.recommendation-field input { width: 100%; padding-left: 2.65rem !important; }
+.recommendation-form input:not(.recommendation-honeypot),
+.recommendation-form textarea {
   min-height: 3.3rem;
   min-width: 0;
   border: 1px solid var(--line-2);
@@ -2784,10 +2796,21 @@ input:focus-visible,
   outline: none;
   padding: 0 1.2rem;
 }
-.recommendation-form input::placeholder { color: var(--muted); }
-.recommendation-form input:focus { border-color: rgba(var(--accent-rgb), 0.55); }
+.recommendation-form textarea {
+  grid-column: 1 / -1;
+  min-height: 6.5rem;
+  resize: vertical;
+  border-radius: 1.35rem;
+  padding: 1rem 1.2rem;
+}
+.recommendation-form input::placeholder,
+.recommendation-form textarea::placeholder { color: var(--muted); }
+.recommendation-form input:focus,
+.recommendation-form textarea:focus { border-color: rgba(var(--accent-rgb), 0.55); }
 .recommendation-form button {
   display: grid;
+  grid-column: 3;
+  grid-row: 1;
   aspect-ratio: 1;
   min-height: 3.3rem;
   place-items: center;
@@ -2797,6 +2820,34 @@ input:focus-visible,
   transition: transform 180ms ease, filter 180ms ease;
 }
 .recommendation-form button:hover { transform: translateY(-2px); filter: brightness(1.1); }
+.recommendation-form button:disabled { cursor: wait; opacity: 0.55; transform: none; }
+.recommendation-honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  pointer-events: none;
+}
+.recommendation-status {
+  min-height: 1.25rem;
+  max-width: 32rem;
+  margin-top: 0.6rem;
+  color: var(--muted-2);
+  font-size: 0.78rem;
+}
+.recommendation-safety {
+  max-width: 32rem;
+  color: var(--muted-2);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.66rem;
+  line-height: 1.55;
+}
+@media (max-width: 560px) {
+  .recommendation-form { grid-template-columns: 1fr auto; }
+  .recommendation-field { grid-column: 1 / -1; }
+  .recommendation-form button { grid-column: 2; grid-row: 4; justify-self: end; }
+}
 
 .place-chip {
   display: inline-flex;
@@ -2830,6 +2881,20 @@ input:focus-visible,
   font-style: normal;
 }
 .others-row strong { font-size: 0.92rem; }
+.visitor-place-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.55rem;
+}
+.visitor-place-line span { color: var(--accent); font-size: 0.66rem; }
+.others-row p {
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
 
 .world-console { display: grid; gap: 1.25rem; align-self: start; }
 
@@ -2909,6 +2974,32 @@ input:focus-visible,
 }
 
 .travel-list { border-top: 1px solid var(--line); }
+.travel-list-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.2rem 0 0.8rem;
+}
+.travel-list-head span {
+  color: var(--muted-2);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.64rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.travel-list-head h3 { margin-top: 0.3rem; color: #fff; font-size: 1.25rem; font-weight: 650; }
+.travel-list-head strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid rgba(var(--accent-rgb), 0.28);
+  border-radius: 999px;
+  padding: 0.38rem 0.65rem;
+  color: var(--accent);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
 .travel-card {
   display: grid;
   grid-template-columns: 4.5rem 1fr;
@@ -2937,6 +3028,14 @@ input:focus-visible,
   font-style: normal;
 }
 .travel-card em { margin-top: 0.6rem; }
+.travel-card-meta { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.travel-card .visited-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #7dd3a7;
+  letter-spacing: 0.08em;
+}
 
 /* California sky widget */
 .california-sky {

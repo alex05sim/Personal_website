@@ -9,7 +9,7 @@ Personal portfolio of **Alex Simpson** — CS + Data Science @ UC Berkeley. Secu
 - **Interactive 3D homepage** — a WebGL space scene (three.js / React Three Fiber) with clickable objects that warp you to the matching project page.
 - **CubeSat telemetry PCB showcase** — the real board as an exploded-view GLB model with per-section design walkthroughs (crypto, datapath, firmware).
 - **Solar cycle research** — a custom GLSL plasma-shader sun fronting a full research write-up on modeling the solar butterfly diagram (classical + diffusion hybrid).
-- **World page** — a travel globe with visitor-submitted place recommendations (Redis-backed in production).
+- **World page** — a travel globe with named visitor recommendations, comments, and a personal visited-places log (Redis-backed in production, with server-side moderation and abuse controls).
 - **`/plain`** — a fast, low-motion fallback of the entire site for accessibility and quick recruiter skims.
 
 ## Stack
@@ -34,8 +34,15 @@ The World page's shared recommendations use a Redis REST backend when deployed:
 | --- | --- |
 | `KV_REST_API_URL` | Upstash / Vercel KV REST endpoint |
 | `KV_REST_API_TOKEN` | Auth token for the endpoint |
+| `WORLD_COMMENT_BLOCKLIST` | Optional comma-separated phrases rejected from public submissions |
 
-Without them, submissions fall back to a local JSON file (fine for dev; ephemeral on serverless).
+Without the Redis variables, submissions use a local JSON file in development. Production writes
+fail closed until the database is configured, so visitor comments are never accepted into ephemeral
+serverless storage.
+Keep both credentials server-side; never prefix them with `NEXT_PUBLIC_`. Production submissions are
+same-site only, rate-limited, size-limited, and validated before they reach the store.
+Names, places, and comments are stored as one database record. A built-in profanity filter runs
+before every write; `WORLD_COMMENT_BLOCKLIST` adds portfolio-owner-specific phrases to that filter.
 
 ## Structure
 

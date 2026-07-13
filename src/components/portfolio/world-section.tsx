@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Globe2, MapPin, Send, Users } from "lucide-react";
+import { Camera, CheckCircle2, Globe2, MapPin, Route, Send, UserRound, Users } from "lucide-react";
 import dynamic from "next/dynamic";
 import {
   type FormEvent,
@@ -19,8 +19,30 @@ const TravelGlobe = dynamic(() => import("../travel-globe").then((m) => m.Travel
   ssr: false,
 });
 
+type VisitorRecommendation = {
+  id?: string;
+  visitorName: string;
+  place: string;
+  comment: string;
+  x: number | null;
+  y: number | null;
+};
+
+const starterRecommendations = (): VisitorRecommendation[] =>
+  suggestedPlaces.map((place) => ({
+    visitorName: "Community pick",
+    place,
+    comment: "",
+    x: null,
+    y: null,
+  }));
+
 export function WorldSection() {
+  const [visitorName, setVisitorName] = useState("");
   const [place, setPlace] = useState("");
+  const [comment, setComment] = useState("");
+  const [formStatus, setFormStatus] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [pendingPin, setPendingPin] = useState<{ x: number; y: number } | null>(null);
   const [placedPins, setPlacedPins] = useState<Array<{ label: string; x: number; y: number }>>(
     () => {
@@ -41,36 +63,64 @@ export function WorldSection() {
       }
     },
   );
-  const [recommendations, setRecommendations] = useState<string[]>(() => {
+  const [recommendations, setRecommendations] = useState<VisitorRecommendation[]>(() => {
     if (typeof window === "undefined") {
-      return suggestedPlaces;
+      return starterRecommendations();
     }
 
     const saved = window.localStorage.getItem("portfolio-place-recommendations");
 
     if (!saved) {
-      return suggestedPlaces;
+      return starterRecommendations();
     }
 
     try {
-      return JSON.parse(saved) as string[];
+      const cached = JSON.parse(saved) as unknown;
+      if (!Array.isArray(cached) || !cached.every((item) => typeof item === "string")) {
+        throw new Error("invalid cache");
+      }
+      return cached.map((item) => ({
+        visitorName: "Community pick",
+        place: item,
+        comment: "",
+        x: null,
+        y: null,
+      }));
     } catch {
-      return suggestedPlaces;
+      return starterRecommendations();
     }
   });
 
   function applyServerEntries(
-    entries: Array<{ place: string; x: number | null; y: number | null }>,
+    entries: Array<{
+      id?: string;
+      visitorName?: string;
+      place: string;
+      comment?: string;
+      x: number | null;
+      y: number | null;
+    }>,
   ) {
-    const places = entries.map((entry) => entry.place);
-    setRecommendations(places.length ? places.slice(0, 12) : suggestedPlaces);
+    const normalized: VisitorRecommendation[] = entries.map((entry) => ({
+      ...entry,
+      visitorName: entry.visitorName?.trim() || "Visitor",
+      comment: entry.comment ?? "",
+    }));
+    setRecommendations(
+      normalized.length
+        ? normalized.slice(0, 12)
+        : starterRecommendations(),
+    );
     setPlacedPins(
       entries
         .filter((entry) => typeof entry.x === "number" && typeof entry.y === "number")
         .slice(0, 40)
         .map((entry) => ({ label: entry.place, x: entry.x as number, y: entry.y as number })),
     );
-    window.localStorage.setItem("portfolio-place-recommendations", JSON.stringify(places));
+    window.localStorage.setItem(
+      "portfolio-place-recommendations",
+      JSON.stringify(normalized.map((entry) => entry.place)),
+    );
   }
 
   useEffect(() => {
@@ -94,32 +144,44 @@ export function WorldSection() {
 
   async function submitRecommendation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const trimmedName = visitorName.trim();
     const trimmedPlace = place.trim();
 
+    if (!trimmedName) {
+      setFormStatus("Add your name (a first name is enough).");
+      return;
+    }
     if (!trimmedPlace) {
+      setFormStatus("Add a place name.");
+      return;
+    }
+    const trimmedComment = comment.trim();
+    if (!trimmedComment) {
+      setFormStatus("Add a short comment about why it is worth visiting.");
       return;
     }
 
     const pin = pendingPin;
-    const optimisticRecommendations = [trimmedPlace, ...recommendations].slice(0, 12);
-    const optimisticPins = pin
-      ? [{ label: trimmedPlace, x: pin.x, y: pin.y }, ...placedPins].slice(0, 40)
-      : placedPins;
-
-    setRecommendations(optimisticRecommendations);
-    setPlacedPins(optimisticPins);
-    setPendingPin(null);
-    setPlace("");
+    setSubmitting(true);
+    setFormStatus("Saving suggestion…");
 
     try {
       const response = await fetch("/api/recommendations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ place: trimmedPlace, x: pin?.x ?? null, y: pin?.y ?? null }),
+        body: JSON.stringify({
+          visitorName: trimmedName,
+          place: trimmedPlace,
+          comment: trimmedComment,
+          website: "",
+          x: pin?.x ?? null,
+          y: pin?.y ?? null,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error("save failed");
+        const failure = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(failure?.error ?? "Could not save this suggestion.");
       }
 
       const data = await response.json();
@@ -127,12 +189,15 @@ export function WorldSection() {
       if (Array.isArray(data.items)) {
         applyServerEntries(data.items);
       }
-    } catch {
-      window.localStorage.setItem(
-        "portfolio-place-recommendations",
-        JSON.stringify(optimisticRecommendations),
-      );
-      window.localStorage.setItem("portfolio-world-pins", JSON.stringify(optimisticPins));
+      setPendingPin(null);
+      setVisitorName("");
+      setPlace("");
+      setComment("");
+      setFormStatus("Thanks — your recommendation is now on the map.");
+    } catch (error) {
+      setFormStatus(error instanceof Error ? error.message : "Could not save this suggestion.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -174,26 +239,75 @@ export function WorldSection() {
           </p>
 
           <form className="recommendation-form mt-10" onSubmit={submitRecommendation}>
+            <label className="sr-only" htmlFor="visitor-name">
+              Your name
+            </label>
+            <div className="recommendation-field">
+              <UserRound aria-hidden="true" size={16} />
+              <input
+                autoComplete="name"
+                id="visitor-name"
+                maxLength={40}
+                name="visitorName"
+                onChange={(event) => setVisitorName(event.target.value)}
+                placeholder="Your name"
+                required
+                value={visitorName}
+              />
+            </div>
             <label className="sr-only" htmlFor="place">
               Recommend a place
             </label>
-            <input
-              id="place"
-              name="place"
-              onChange={(event) => setPlace(event.target.value)}
-              placeholder="Recommend a place"
-              value={place}
+            <div className="recommendation-field">
+              <MapPin aria-hidden="true" size={16} />
+              <input
+                autoComplete="off"
+                id="place"
+                name="place"
+                onChange={(event) => setPlace(event.target.value)}
+                placeholder="City or place"
+                maxLength={80}
+                required
+                value={place}
+              />
+            </div>
+            <textarea
+              aria-label="Comment about this place"
+              maxLength={280}
+              name="comment"
+              onChange={(event) => setComment(event.target.value)}
+              placeholder="Why should I visit? (280 characters max)"
+              required
+              rows={3}
+              value={comment}
             />
-            <button aria-label="Submit recommendation" type="submit">
+            <input
+              aria-hidden="true"
+              autoComplete="off"
+              className="recommendation-honeypot"
+              name="website"
+              tabIndex={-1}
+            />
+            <button aria-label="Submit recommendation" disabled={submitting} type="submit">
               <Send size={18} />
             </button>
           </form>
+          <p className="recommendation-status" aria-live="polite">
+            {formStatus}
+          </p>
+          <p className="recommendation-safety">
+            First name is enough. Public posts are filtered for profanity, spam, links, and contact
+            details.
+          </p>
 
           <div className="mt-5 flex flex-wrap gap-2">
-            {recommendations.map((recommendation) => (
-              <span className="place-chip" key={recommendation}>
+            {recommendations.map((recommendation, index) => (
+              <span
+                className="place-chip"
+                key={recommendation.id ?? `${recommendation.place}-${index}`}
+              >
                 <MapPin size={14} />
-                {recommendation}
+                {recommendation.place}
               </span>
             ))}
           </div>
@@ -206,11 +320,22 @@ export function WorldSection() {
             </div>
             <div className="mt-2">
               {recommendations.slice(0, 5).map((recommendation, index) => (
-                <div className="others-row" key={`${recommendation}-${index}`}>
+                <div
+                  className="others-row"
+                  key={recommendation.id ?? `${recommendation.place}-${index}`}
+                >
                   <span>{String(index + 1).padStart(2, "0")}</span>
-                  <strong>{recommendation}</strong>
+                  <div>
+                    <div className="visitor-place-line">
+                      <strong>{recommendation.place}</strong>
+                      <span>by {recommendation.visitorName}</span>
+                    </div>
+                    {recommendation.comment ? <p>{recommendation.comment}</p> : null}
+                  </div>
                   <em>
-                    {placedPins.some((pin) => pin.label === recommendation) ? "Pinned" : "Suggested"}
+                    {placedPins.some((pin) => pin.label === recommendation.place)
+                      ? "Pinned"
+                      : "Suggested"}
                   </em>
                 </div>
               ))}
@@ -256,13 +381,28 @@ export function WorldSection() {
           </div>
 
           <div className="travel-list">
+            <div className="travel-list-head">
+              <div>
+                <span>Personal travel log</span>
+                <h3>Places I&apos;ve been</h3>
+              </div>
+              <strong>
+                <Route size={15} />
+                {travelStops.length} stops
+              </strong>
+            </div>
             {travelStops.map((stop, index) => (
               <article className="travel-card" key={stop.place}>
                 <div className="travel-photo">
                   <Camera size={20} />
                 </div>
                 <div>
-                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <div className="travel-card-meta">
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                    <span className="visited-badge">
+                      <CheckCircle2 size={12} /> Visited
+                    </span>
+                  </div>
                   <h3>{stop.place}</h3>
                   <p>{stop.note}</p>
                   <em>{stop.coordinates}</em>

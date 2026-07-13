@@ -17,19 +17,27 @@ import path from "path";
 
 export type Recommendation = {
   id: string;
+  visitorName: string;
   place: string;
+  comment: string;
   x: number | null;
   y: number | null;
   createdAt: number;
 };
 
 const MAX_ENTRIES = 200;
-const MAX_PLACE_LENGTH = 80;
+export const MAX_PLACE_LENGTH = 80;
+export const MAX_COMMENT_LENGTH = 280;
+export const MAX_VISITOR_NAME_LENGTH = 40;
 const REDIS_KEY = "world:recommendations";
 
 const redisUrl = process.env.KV_REST_API_URL;
 const redisToken = process.env.KV_REST_API_TOKEN;
 const useRedis = Boolean(redisUrl && redisToken);
+
+export function hasPersistentRecommendationStore(): boolean {
+  return useRedis;
+}
 
 // ---- Redis REST backend (Upstash / Vercel KV) ---------------------------------
 async function redisCommand<T>(command: Array<string | number>): Promise<T> {
@@ -56,7 +64,7 @@ async function redisList(): Promise<Recommendation[]> {
   return (items ?? [])
     .map((item) => {
       try {
-        return JSON.parse(item) as Recommendation;
+        return parseRecommendation(JSON.parse(item));
       } catch {
         return null;
       }
@@ -76,7 +84,10 @@ const dataFile = path.join(dataDir, "recommendations.json");
 async function fileList(): Promise<Recommendation[]> {
   try {
     const raw = await fs.readFile(dataFile, "utf8");
-    return JSON.parse(raw) as Recommendation[];
+    const items = JSON.parse(raw) as unknown;
+    return Array.isArray(items)
+      ? items.map(parseRecommendation).filter((item): item is Recommendation => item !== null)
+      : [];
   } catch {
     return [];
   }
@@ -95,7 +106,9 @@ export async function listRecommendations(): Promise<Recommendation[]> {
 }
 
 export async function addRecommendation(input: {
+  visitorName: string;
   place: string;
+  comment?: string;
   x?: number | null;
   y?: number | null;
 }): Promise<Recommendation> {
@@ -104,7 +117,9 @@ export async function addRecommendation(input: {
 
   const rec: Recommendation = {
     id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    visitorName: input.visitorName.trim().slice(0, MAX_VISITOR_NAME_LENGTH),
     place: input.place.trim().slice(0, MAX_PLACE_LENGTH),
+    comment: input.comment?.trim().slice(0, MAX_COMMENT_LENGTH) ?? "",
     x: clamp(input.x),
     y: clamp(input.y),
     createdAt: Date.now(),
@@ -117,4 +132,37 @@ export async function addRecommendation(input: {
   }
 
   return rec;
+}
+
+/** Validate records read from storage and migrate older place-only entries. */
+function parseRecommendation(value: unknown): Recommendation | null {
+  if (!value || typeof value !== "object") return null;
+
+  const item = value as Partial<Recommendation>;
+  if (
+    typeof item.id !== "string" ||
+    typeof item.place !== "string" ||
+    typeof item.createdAt !== "number" ||
+    !Number.isFinite(item.createdAt)
+  ) {
+    return null;
+  }
+
+  const coordinate = (value: unknown) =>
+    typeof value === "number" && Number.isFinite(value)
+      ? Math.max(0, Math.min(100, value))
+      : null;
+
+  return {
+    id: item.id.slice(0, 100),
+    visitorName:
+      typeof item.visitorName === "string" && item.visitorName.trim()
+        ? item.visitorName.trim().slice(0, MAX_VISITOR_NAME_LENGTH)
+        : "Visitor",
+    place: item.place.slice(0, MAX_PLACE_LENGTH),
+    comment: typeof item.comment === "string" ? item.comment.slice(0, MAX_COMMENT_LENGTH) : "",
+    x: coordinate(item.x),
+    y: coordinate(item.y),
+    createdAt: item.createdAt,
+  };
 }
