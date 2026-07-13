@@ -22,11 +22,12 @@ export function SolarPin() {
   useMotionValueEvent(scrollY, "change", (y) => {
     const vh = typeof window !== "undefined" ? window.innerHeight : 800;
     setDocked(y > vh * 0.82);
-    // fade out as the project article ends, before the shared footer scrolls in
+    // "sunset" as the project article ends: trigger a little before the footer
+    // arrives so the sink-and-dim has room to play out
     if (!articleRef.current) articleRef.current = document.querySelector(".detail");
     const article = articleRef.current;
     if (article) {
-      setHidden(article.getBoundingClientRect().bottom < vh * 0.9);
+      setHidden(article.getBoundingClientRect().bottom < vh * 1.08);
     }
   });
 

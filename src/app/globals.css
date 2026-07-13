@@ -1630,10 +1630,14 @@ input:focus-visible,
     opacity: 0.42;
   }
 }
-/* once the project article ends, fade the sun so it never bleeds over the
-   shared (cool-themed) site footer. Last so it wins over the states above. */
+/* once the project article ends, the sun SETS — it sinks below the viewport,
+   shrinking and dimming as it goes, so the handoff to the cool footer reads as
+   a sunset rather than a fade. Last so it wins over the states above. */
 .solar-pin.is-hidden {
   opacity: 0;
+  transform: translate(0, calc(-50% + 46vh)) scale(0.82);
+  transition: transform 1.2s cubic-bezier(0.5, 0, 0.7, 0.4), opacity 1.2s ease,
+    width 0.7s cubic-bezier(0.22, 1, 0.36, 1), left 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .solar-photo {
   position: absolute;
@@ -1948,11 +1952,18 @@ input:focus-visible,
    when the sun is actually there to fill the left. */
 @media (min-width: 1650px) and (prefers-reduced-motion: no-preference) {
   .detail-solar .shell {
-    max-width: 52rem;
+    max-width: 56rem;
     margin-left: auto;
     /* same centered-frame cap as the hero brief, so the sections rebalance the
        same way on ultrawide (right edges align, gap stays bounded). */
     margin-right: max(clamp(2rem, 6vw, 6rem), (100vw - var(--hero-frame)) / 2);
+  }
+}
+/* Ultrawide: there's a lot of dark middle between the sun and the column —
+   let the content (and its charts) use more of it. */
+@media (min-width: 2040px) and (prefers-reduced-motion: no-preference) {
+  .detail-solar .shell {
+    max-width: 66rem;
   }
 }
 
@@ -1968,7 +1979,7 @@ input:focus-visible,
    Inherits the warm .detail-solar palette (amber accent, warm bg).
    ============================================================ */
 .research {
-  max-width: 54rem;
+  max-width: 66rem;
   /* keep prose readable where it sits over the sun's glow */
   text-shadow: 0 2px 22px rgba(0, 0, 0, 0.6);
 }
@@ -1986,7 +1997,7 @@ input:focus-visible,
 .research-sub {
   margin-top: 0.7rem;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: 1.02rem;
 }
 .research-status {
   display: flex;
@@ -2051,7 +2062,7 @@ input:focus-visible,
 }
 .research-h {
   font-family: var(--font-geist-mono), monospace;
-  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  font-size: clamp(1.15rem, 1.7vw, 1.45rem);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.02em;
@@ -2065,10 +2076,10 @@ input:focus-visible,
 
 .research-body p {
   margin-top: 1rem;
-  max-width: 62ch;
+  max-width: 66ch;
   color: var(--muted);
-  font-size: 0.97rem;
-  line-height: 1.68;
+  font-size: 1.05rem;
+  line-height: 1.7;
 }
 .research-body strong {
   color: #f4e8d8;
@@ -2114,8 +2125,8 @@ input:focus-visible,
   margin-top: 0.5rem;
   margin-bottom: 0;
   color: var(--muted);
-  font-size: 0.9rem;
-  line-height: 1.55;
+  font-size: 0.97rem;
+  line-height: 1.6;
   max-width: none;
 }
 
@@ -2135,7 +2146,7 @@ input:focus-visible,
 }
 .research-step-body h4 {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.98rem;
+  font-size: 1.06rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   color: #fff;
@@ -2295,10 +2306,10 @@ input:focus-visible,
   }
 }
 .research-fig figcaption {
-  margin-top: 0.6rem;
+  margin-top: 0.65rem;
   color: var(--muted-2);
-  font-size: 0.8rem;
-  line-height: 1.5;
+  font-size: 0.9rem;
+  line-height: 1.55;
 }
 .research-fig figcaption strong {
   color: var(--accent);
@@ -2321,10 +2332,10 @@ input:focus-visible,
 .research-list li {
   position: relative;
   padding-left: 1.1rem;
-  max-width: 64ch;
+  max-width: 66ch;
   color: var(--muted);
-  font-size: 0.95rem;
-  line-height: 1.62;
+  font-size: 1.02rem;
+  line-height: 1.65;
 }
 .research-list li::before {
   content: "";
