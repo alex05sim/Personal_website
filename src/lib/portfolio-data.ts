@@ -168,15 +168,20 @@ export const education = {
   ],
 };
 
+/** Top navigation — kept tight; secondary destinations live in the footer. */
 export const navigationTabs = [
   { label: "Home", href: "/" },
   { label: "Work", href: "/#work" },
   { label: "Projects", href: "/projects" },
-  { label: "Hire me", href: "/hire-me" },
-  { label: "Skills", href: "/#skills" },
   { label: "World", href: "/world" },
   { label: "Contact", href: "/#contact" },
-  { label: "Plain", href: "/plain" },
+];
+
+/** Footer "Navigate" column — the full map, including recruiter + accessibility pages. */
+export const footerNavigation = [
+  ...navigationTabs,
+  { label: "Hire me", href: "/hire-me" },
+  { label: "Plain version", href: "/plain" },
 ];
 
 export const domains: DomainInfo[] = [

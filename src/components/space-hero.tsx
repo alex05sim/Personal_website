@@ -1065,7 +1065,9 @@ export function SpaceHero() {
                     ease: [0.22, 1, 0.36, 1],
                   }}
                 >
-                  {character === " " ? " " : character}
+                  {/* nbsp: a lone collapsible space inside an inline-block span
+                      renders zero-width, which deleted the gap in "Alex Simpson" */}
+                  {character === " " ? " " : character}
                 </motion.span>
               ))}
             </span>

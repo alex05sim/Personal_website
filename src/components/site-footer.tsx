@@ -2,7 +2,7 @@
 
 import { ArrowUp } from "lucide-react";
 import Link from "next/link";
-import { navigationTabs, profile, socials } from "@/lib/portfolio-data";
+import { footerNavigation, profile, socials } from "@/lib/portfolio-data";
 
 export function SiteFooter() {
   return (
@@ -19,7 +19,7 @@ export function SiteFooter() {
 
           <nav className="footer-nav" aria-label="Footer">
             <span className="footer-label">Navigate</span>
-            {navigationTabs.map((tab) => (
+            {footerNavigation.map((tab) => (
               <Link key={tab.href} href={tab.href}>
                 {tab.label}
               </Link>

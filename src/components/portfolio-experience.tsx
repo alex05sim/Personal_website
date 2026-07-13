@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, ExternalLink, GraduationCap, Search } from "lucide-react";
+import { ArrowUpRight, BriefcaseBusiness, ExternalLink, GraduationCap, Search } from "lucide-react";
 import { motion, useScroll, useTransform } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -543,6 +543,13 @@ export function ContactSection() {
               Download resume
               <ExternalLink size={18} />
             </a>
+            <Link className="contact-row" href="/hire-me">
+              <span className="icon">
+                <BriefcaseBusiness size={18} />
+              </span>
+              <span>Recruiter summary</span>
+              <ArrowUpRight size={16} />
+            </Link>
             {socials.map((social) => {
               const Icon = social.icon;
 
