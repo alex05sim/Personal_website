@@ -46,7 +46,7 @@ export function SiteFooter() {
         </div>
 
         <div className="footer-bottom">
-          <span>(c) {new Date().getFullYear()} {profile.name}</span>
+          <span>&copy; {new Date().getFullYear()} {profile.name}</span>
           <span className="footer-built">
             Next.js - R3F - Tailwind - Imagery: NASA &amp; Solar System Scope
           </span>

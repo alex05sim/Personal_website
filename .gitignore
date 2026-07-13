@@ -42,4 +42,13 @@ next-env.d.ts
 
 # local World recommendations store
 .data/
+
+# large 3D source files - but ship the optimized runtime models in public/
 *.glb
+!public/**/*.glb
+
+# dev output that doesn't belong in the repo
+artifacts/
+test-results/
+dev-server*.log
+playwright-report/

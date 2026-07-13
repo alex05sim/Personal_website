@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# alexsimpson.dev
 
-## Getting Started
+Personal portfolio of **Alex Simpson** — CS + Data Science @ UC Berkeley. Security, hardware, and AI, presented as an interactive 3D experience.
 
-First, run the development server:
+**Live site:** https://alexsimpson.dev
+
+## Highlights
+
+- **Interactive 3D homepage** — a WebGL space scene (three.js / React Three Fiber) with clickable objects that warp you to the matching project page.
+- **CubeSat telemetry PCB showcase** — the real board as an exploded-view GLB model with per-section design walkthroughs (crypto, datapath, firmware).
+- **Solar cycle research** — a custom GLSL plasma-shader sun fronting a full research write-up on modeling the solar butterfly diagram (classical + diffusion hybrid).
+- **World page** — a travel globe with visitor-submitted place recommendations (Redis-backed in production).
+- **`/plain`** — a fast, low-motion fallback of the entire site for accessibility and quick recruiter skims.
+
+## Stack
+
+Next.js (App Router) · React · TypeScript · Tailwind CSS · three.js + @react-three/fiber · motion · Lenis · Playwright (e2e)
+
+## Development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # dev server at localhost:3000
+npm run build      # production build
+npm run lint       # eslint
+npm run test:e2e   # playwright e2e tests
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Environment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The World page's shared recommendations use a Redis REST backend when deployed:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Purpose |
+| --- | --- |
+| `KV_REST_API_URL` | Upstash / Vercel KV REST endpoint |
+| `KV_REST_API_TOKEN` | Auth token for the endpoint |
 
-## Learn More
+Without them, submissions fall back to a local JSON file (fine for dev; ephemeral on serverless).
 
-To learn more about Next.js, take a look at the following resources:
+## Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/app` — routes (home, `/projects`, `/hire-me`, `/world`, `/plain` mirror)
+- `src/components` — 3D scenes, PCB showcase, research write-up, site chrome
+- `src/lib/portfolio-data.ts` — single source of truth for profile, projects, and experience content
+- `research/` — the solar-cycle analysis write-up backing the site's research section
