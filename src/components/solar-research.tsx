@@ -119,7 +119,7 @@ export function SolarResearch() {
         <ResearchFigure
           src="/research/butterfly-diagram.png"
           label="Figure 1"
-          caption="The butterfly diagram. Each point is a sunspot group, colored by cycle; emergence drifts equatorward as each cycle ages (Spörer’s Law)."
+          caption="The butterfly diagram. Each point is a sunspot group, alternating color by cycle; emergence drifts equatorward as each cycle ages (Spörer’s Law)."
           wide
         />
       </div>
@@ -156,7 +156,7 @@ export function SolarResearch() {
             <ResearchFigure
               src="/research/universal-mean-path.png"
               label="Figure 2"
-              caption="Aligned in τ, every cycle’s drift collapses onto a single exponential mean path (black)."
+              caption="Aligned in τ, every cycle’s drift collapses onto a single exponential mean path (amber)."
             />
           </div>
         </div>
@@ -174,7 +174,7 @@ export function SolarResearch() {
             <ResearchFigure
               src="/research/sigma-envelope.png"
               label="Figure 3"
-              caption="Spread vs. mean latitude. The equatorward half of every cycle falls on one shared line (red dashed); only the poleward half varies."
+              caption="Spread vs. mean latitude. The equatorward half of every cycle falls on one shared line (amber dashed); only the poleward half varies."
             />
           </div>
         </div>
@@ -258,7 +258,7 @@ export function SolarResearch() {
           <ResearchFigure
             src="/research/residual-sanity.png"
             label="Figure 7"
-            caption="One window: empirical histogram (bars), the classical Gaussian (red), and their difference (green) — the structure the diffusion model learns to generate."
+            caption="One window: empirical histogram (bars), the classical Gaussian (amber), and their difference (cyan) — the structure the diffusion model learns to generate."
           />
           <ResearchFigure
             src="/research/amplitude-split.png"

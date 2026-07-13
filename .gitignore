@@ -52,3 +52,7 @@ artifacts/
 test-results/
 dev-server*.log
 playwright-report/
+
+# raw research inputs (large; figures are exported to public/research instead)
+research/*.csv
+research/*.ipynb
