@@ -22,7 +22,8 @@ const vertexShader = /* glsl */ `
 `;
 
 const fragmentShader = /* glsl */ `
-  uniform float uTime;
+  uniform float uPhase;
+  uniform float uExcite;
   varying vec3 vPos;
   varying vec3 vNormal;
 
@@ -79,7 +80,7 @@ const fragmentShader = /* glsl */ `
   }
 
   void main(){
-    float t = uTime * 0.13;
+    float t = uPhase;
     vec3 p = vPos * 2.2;
     // domain warp → flowing, churning plasma (kept cheap: 2 fbm + 1 detail tap)
     float warp = fbm(p + vec3(0.0, 0.0, t));
@@ -95,14 +96,46 @@ const fragmentShader = /* glsl */ `
     col = mix(col, vec3(1.0, 0.82, 0.32), smoothstep(0.66, 0.85, v));
     col = mix(col, vec3(1.0, 0.96, 0.86), smoothstep(0.86, 0.97, v)); // white-hot
 
-    // glowing limb (corona-ish rim)
+    // glowing limb (corona-ish rim) — brightens slightly while hovered
     float fres = pow(1.0 - max(dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0), 2.5);
-    col += vec3(1.0, 0.46, 0.16) * fres * 0.75;
+    col += vec3(1.0, 0.46, 0.16) * fres * (0.75 + uExcite * 0.2);
 
-    col *= 1.3;
+    col *= 1.3 + uExcite * 0.14;
     gl_FragColor = vec4(col, 1.0);
   }
 `;
+
+// Shared mutable state for pointer interactivity — written by event handlers,
+// read every frame. A ref-style object (not React state) so nothing re-renders.
+type SunInteraction = {
+  parX: number; // normalized pointer, -1..1 across the viewport
+  parY: number;
+  excite: number; // lerped 0..1 hover intensity
+  exciteTarget: number;
+  burstAt: number; // R3F clock stamp of the last click burst
+  burstPending: boolean; // set by the click handler, stamped on the next frame
+  reducedMotion: boolean;
+};
+
+function makeInteraction(): SunInteraction {
+  return {
+    parX: 0,
+    parY: 0,
+    excite: 0,
+    exciteTarget: 0,
+    burstAt: -100,
+    burstPending: false,
+    reducedMotion: false,
+  };
+}
+
+const BURST_LEN = 1.6; // seconds a click burst lasts
+
+function burstEnv(t: number, burstAt: number, stagger = 0) {
+  const dt = t - burstAt - stagger;
+  if (dt <= 0 || dt >= BURST_LEN) return 0;
+  return Math.pow(Math.sin((dt / BURST_LEN) * Math.PI), 0.7);
+}
 
 // Soft warm corona halo around the disc — replaces EffectComposer bloom (which
 // rendered intermittent black frames). A radial-gradient plane sits behind the
@@ -125,13 +158,20 @@ function makeGlowTexture() {
   return new CanvasTexture(c);
 }
 
-function GlowHalo() {
+function GlowHalo({ inter }: { inter: React.RefObject<SunInteraction> }) {
   const tex = useMemo(() => makeGlowTexture(), []);
   const ref = useRef<Mesh>(null);
   useFrame((state) => {
     if (ref.current) {
-      const s = 1 + Math.sin(state.clock.elapsedTime * 0.6) * 0.04;
-      ref.current.scale.set(s, s, 1); // gentle breathing glow
+      const t = state.clock.elapsedTime;
+      const it = inter.current;
+      // gentle breathing glow + a swell on hover and a pulse on click
+      const s =
+        1 +
+        Math.sin(t * 0.6) * 0.04 +
+        it.excite * 0.05 +
+        burstEnv(t, it.burstAt) * 0.1;
+      ref.current.scale.set(s, s, 1);
     }
   });
   return (
@@ -186,7 +226,7 @@ function makeFlareTexture() {
   return new CanvasTexture(c);
 }
 
-function SolarFlares() {
+function SolarFlares({ inter }: { inter: React.RefObject<SunInteraction> }) {
   const tex = useMemo(() => makeFlareTexture(), []);
   const groups = useRef<(Group | null)[]>([]);
   // each flare = a bright core jet + a wider, softer, oranger glow under it, so
@@ -229,12 +269,15 @@ function SolarFlares() {
     // column (the sun↔content gap shrinks as the screen narrows).
     const vw = typeof window !== "undefined" ? window.innerWidth : 1920;
     const lenScale = Math.max(0.5, Math.min(1, (vw - 1450) / 650));
+    const it = inter.current;
     for (let i = 0; i < flares.length; i++) {
       const grp = groups.current[i];
       if (!grp) continue;
       const f = FLARES[i];
       const phase = (t / f.period + f.phase) % 1;
-      const env = Math.pow(Math.sin(phase * Math.PI), 0.7); // erupt + recede
+      let env = Math.pow(Math.sin(phase * Math.PI), 0.7); // erupt + recede
+      // a click erupts every flare in a quick stagger, on top of its own cycle
+      env = Math.max(env, burstEnv(t, it.burstAt, i * 0.07) * 0.9);
       grp.scale.set(1, (0.1 + env) * lenScale, 1);
       flares[i].coreMat.opacity = env * 0.95;
       flares[i].glowMat.opacity = env * 0.4;
@@ -259,27 +302,77 @@ function SolarFlares() {
   );
 }
 
-function SunPlasma() {
+function SunPlasma({ inter }: { inter: React.RefObject<SunInteraction> }) {
   const ref = useRef<Mesh>(null);
   const material = useMemo(
-    () => new ShaderMaterial({ uniforms: { uTime: { value: 0 } }, vertexShader, fragmentShader }),
+    () =>
+      new ShaderMaterial({
+        uniforms: { uPhase: { value: 0 }, uExcite: { value: 0 } },
+        vertexShader,
+        fragmentShader,
+      }),
     [],
   );
   useFrame((state, delta) => {
-    material.uniforms.uTime.value = state.clock.elapsedTime;
-    if (ref.current) ref.current.rotation.y += delta * 0.045; // slow turn
+    const it = inter.current;
+    if (it.burstPending) {
+      it.burstAt = state.clock.elapsedTime;
+      it.burstPending = false;
+    }
+    // lerp hover intensity, then integrate the plasma phase at an excited rate —
+    // integrating (vs scaling elapsedTime) keeps the churn continuous when the
+    // speed changes.
+    it.excite += (it.exciteTarget - it.excite) * Math.min(1, delta * 4);
+    const boost = it.reducedMotion ? 0 : it.excite;
+    material.uniforms.uPhase.value += delta * (0.13 + boost * 0.09);
+    material.uniforms.uExcite.value = boost;
+    if (ref.current) ref.current.rotation.y += delta * (0.045 + boost * 0.04);
   });
   return (
-    <mesh ref={ref} material={material}>
+    <mesh
+      ref={ref}
+      material={material}
+      onPointerOver={(e) => {
+        inter.current.exciteTarget = 1;
+        ((e.nativeEvent.target as HTMLElement | null) ?? document.body).style.cursor = "pointer";
+      }}
+      onPointerOut={(e) => {
+        inter.current.exciteTarget = 0;
+        ((e.nativeEvent.target as HTMLElement | null) ?? document.body).style.cursor = "";
+      }}
+      onClick={() => {
+        inter.current.burstPending = true;
+      }}
+    >
       <sphereGeometry args={[1.6, 96, 96]} />
     </mesh>
   );
+}
+
+// Wraps the whole sun assembly and eases it toward the pointer — a slow, small
+// drift (a few hundredths of a unit), so the sun feels present, not springy.
+function SunRig({ inter, children }: { inter: React.RefObject<SunInteraction>; children: React.ReactNode }) {
+  const ref = useRef<Group>(null);
+  useFrame((_, delta) => {
+    const g = ref.current;
+    if (!g) return;
+    const it = inter.current;
+    const k = Math.min(1, delta * 2.2);
+    if (it.reducedMotion) return;
+    g.position.x += (it.parX * 0.09 - g.position.x) * k;
+    g.position.y += (-it.parY * 0.07 - g.position.y) * k;
+    g.rotation.y += (it.parX * 0.05 - g.rotation.y) * k;
+    g.rotation.x += (it.parY * 0.035 - g.rotation.x) * k;
+  });
+  return <group ref={ref}>{children}</group>;
 }
 
 export function SolarSunStage() {
   // This canvas stays mounted (and animating) for as long as the user is on the
   // page, not just while in view — cap the render buffer so it stays cheap.
   const [dpr, setDpr] = useState(1.3);
+  const inter = useRef<SunInteraction>(makeInteraction());
+
   useEffect(() => {
     const calc = () => {
       const budget = 1600;
@@ -291,6 +384,25 @@ export function SolarSunStage() {
     return () => window.removeEventListener("resize", calc);
   }, []);
 
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const setRM = () => {
+      inter.current.reducedMotion = mq.matches;
+    };
+    setRM();
+    mq.addEventListener("change", setRM);
+    // page-wide pointer tracking so the parallax responds beyond the canvas
+    const onMove = (e: PointerEvent) => {
+      inter.current.parX = (e.clientX / window.innerWidth) * 2 - 1;
+      inter.current.parY = (e.clientY / window.innerHeight) * 2 - 1;
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => {
+      mq.removeEventListener("change", setRM);
+      window.removeEventListener("pointermove", onMove);
+    };
+  }, []);
+
   return (
     <CanvasErrorBoundary label="solar sun">
       <Canvas
@@ -298,9 +410,11 @@ export function SolarSunStage() {
         dpr={dpr}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
-        <GlowHalo />
-        <SunPlasma />
-        <SolarFlares />
+        <SunRig inter={inter}>
+          <GlowHalo inter={inter} />
+          <SunPlasma inter={inter} />
+          <SolarFlares inter={inter} />
+        </SunRig>
       </Canvas>
     </CanvasErrorBoundary>
   );

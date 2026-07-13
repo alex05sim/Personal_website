@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * A figure slot for the research report. Shows a styled placeholder until the
@@ -19,7 +19,30 @@ function ResearchFigure({
   wide?: boolean;
 }) {
   const [loaded, setLoaded] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
   const file = src.split("/").pop();
+
+  // The image can finish loading before hydration attaches onLoad (always the
+  // case for cached/local images), so also check `complete` after mount.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth > 0) setLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!zoomed) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setZoomed(false);
+    };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [zoomed]);
+
   return (
     <figure className={`research-fig${wide ? " is-wide" : ""}`}>
       <div className="research-fig-frame">
@@ -29,16 +52,35 @@ function ResearchFigure({
             <code className="research-fig-ph-file">{file}</code>
           </div>
         ) : null}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={src}
-          alt={caption}
-          className="research-fig-img"
-          loading="lazy"
-          onLoad={() => setLoaded(true)}
+        <button
+          type="button"
+          className="research-fig-zoom"
+          onClick={() => setZoomed(true)}
+          aria-label={`Enlarge ${label}`}
           style={{ display: loaded ? "block" : "none" }}
-        />
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            ref={imgRef}
+            src={src}
+            alt={caption}
+            className="research-fig-img"
+            onLoad={() => setLoaded(true)}
+          />
+        </button>
       </div>
+      {zoomed ? (
+        <div
+          className="research-lightbox"
+          role="dialog"
+          aria-label={`${label} enlarged`}
+          onClick={() => setZoomed(false)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={src} alt={caption} />
+          <p>{caption}</p>
+        </div>
+      ) : null}
       <figcaption>
         <strong>{label}</strong> — {caption}
       </figcaption>
@@ -57,8 +99,31 @@ function SectionHead({ index, title }: { index: string; title: string }) {
 }
 
 export function SolarResearch() {
+  const rootRef = useRef<HTMLElement>(null);
+
+  // Reveal each research section as it scrolls into view. CSS handles the
+  // transition (and disables it under prefers-reduced-motion).
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const sections = root.querySelectorAll(".research-section");
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-revealed");
+            io.unobserve(entry.target);
+          }
+        }
+      },
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.05 },
+    );
+    sections.forEach((s) => io.observe(s));
+    return () => io.disconnect();
+  }, []);
+
   return (
-    <section className="research detail-section mt-16" aria-label="Solar cycle research writeup">
+    <section ref={rootRef} className="research detail-section mt-16" aria-label="Solar cycle research writeup">
       <div className="kicker-line">
         <p className="kicker">Research write-up // ButterflAI</p>
         <span className="rule" />

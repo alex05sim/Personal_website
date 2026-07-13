@@ -2021,6 +2021,20 @@ input:focus-visible,
 
 .research-section {
   margin-top: 3rem;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+.research-section.is-revealed {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .research-section {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 .research-head-row {
   display: flex;
@@ -2076,6 +2090,18 @@ input:focus-visible,
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--bg-1);
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+.research-card:hover {
+  border-color: rgba(var(--accent-rgb), 0.4);
+  transform: translateY(-2px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .research-card,
+  .research-card:hover {
+    transition: none;
+    transform: none;
+  }
 }
 .research-card span {
   font-family: var(--font-geist-mono), monospace;
@@ -2204,6 +2230,69 @@ input:focus-visible,
   height: auto;
   border-radius: 12px;
   border: 1px solid var(--line);
+}
+.research-fig-zoom {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  border-radius: 12px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.research-fig-zoom:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(var(--accent-rgb), 0.25);
+}
+.research-fig-zoom:focus-visible {
+  outline: 2px solid rgba(var(--accent-rgb), 0.8);
+  outline-offset: 3px;
+}
+.research-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  padding: clamp(1rem, 4vw, 3rem);
+  background: rgba(3, 4, 8, 0.92);
+  backdrop-filter: blur(6px);
+  cursor: zoom-out;
+  animation: lightbox-in 0.18s ease;
+}
+.research-lightbox img {
+  max-width: min(1400px, 96vw);
+  max-height: 82vh;
+  width: auto;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7);
+}
+.research-lightbox p {
+  max-width: 70ch;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+@keyframes lightbox-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .research-fig-zoom,
+  .research-fig-zoom:hover {
+    transition: none;
+    transform: none;
+  }
+  .research-lightbox {
+    animation: none;
+  }
 }
 .research-fig figcaption {
   margin-top: 0.6rem;
