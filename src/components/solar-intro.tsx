@@ -6,9 +6,9 @@ import { ScrambleText } from "./scramble-text";
 import { useHydratedReducedMotion } from "./portfolio/shared";
 
 const POINTS = [
-  { label: "01", title: "Ingest the record", tag: "Decades of sunspot + F10.7 series" },
-  { label: "02", title: "Model the cycle", tag: "Features + regression / sequence models" },
-  { label: "03", title: "Forecast activity", tag: "Where the ~11-yr cycle goes next" },
+  { label: "01", title: "Align the record", tag: "14 cycles of sunspot groups, one shared clock" },
+  { label: "02", title: "Fit the skeleton", tag: "One number - amplitude - rebuilds a cycle's wing" },
+  { label: "03", title: "Learn the residual", tag: "Score-based diffusion on what the fit misses" },
 ];
 
 function SolarConsole({ reduce }: { reduce: boolean }) {
@@ -69,8 +69,9 @@ export function SolarIntro() {
         </p>
         <ScrambleText as="h2" className="solar-title" text="READING THE SUN'S CYCLE" duration={1400} />
         <p className="solar-lead">
-          Forecasting solar activity from decades of noisy, only-roughly-periodic time-series — sunspot
-          counts and F10.7 flux, modeled to predict where the ~11-year cycle goes next.
+          A generative model of the Sun&rsquo;s butterfly diagram — a physically motivated classical
+          model rebuilds each cycle&rsquo;s sunspot wing from its amplitude alone, and a diffusion
+          model learns the noisy structure the smooth fit leaves behind.
         </p>
 
         <div className="solar-obj">

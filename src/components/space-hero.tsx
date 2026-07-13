@@ -736,8 +736,17 @@ function HopeSatellite({
             <meshBasicMaterial color="#ffd9a8" />
           </mesh>
           <mesh>
-            <sphereGeometry args={[0.032, 12, 12]} />
-            <meshBasicMaterial color="#f6a23c" transparent opacity={0.42} blending={AdditiveBlending} depthWrite={false} />
+            <sphereGeometry args={[0.026, 12, 12]} />
+            <meshBasicMaterial color="#ffc98c" transparent opacity={0.3} blending={AdditiveBlending} depthWrite={false} />
+          </mesh>
+          {/* antenna boom + beacon, so the close-up has a silhouette */}
+          <mesh position={[0, 0.026, 0]}>
+            <cylinderGeometry args={[0.0012, 0.0012, 0.032, 6]} />
+            <meshBasicMaterial color="#cdd6e4" />
+          </mesh>
+          <mesh position={[0, 0.045, 0]}>
+            <sphereGeometry args={[0.0035, 8, 8]} />
+            <meshBasicMaterial color="#ffffff" />
           </mesh>
           {/* spinning target reticle */}
           <group ref={reticleRef}>
@@ -807,7 +816,9 @@ function LaunchDolly({ active, targetRef, orbit = false }: { active: boolean; ta
       t < 0.4
         ? 0.22 * (t / 0.4) * (t / 0.4)
         : 0.22 + 0.78 * (1 - Math.pow(1 - (t - 0.4) / 0.6, 2.6));
-    const endDist = orbit ? 0.52 : 0.24;
+    // stop far enough out that the sat reads as a lit object in space, not a
+    // close-up of simple geometry; the warp flash covers the final distance
+    const endDist = orbit ? 0.52 : 0.36;
     const dist = startDist.current + (endDist - startDist.current) * ramp;
     desired.copy(target).addScaledVector(axis, dist);
     // one gentle sway gives the run shape — a lateral drift, not a circle

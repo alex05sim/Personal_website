@@ -3260,6 +3260,13 @@ input:focus-visible,
   color: #fff;
   border-color: var(--line-2);
 }
+/* this unlayered rule outranks Tailwind's layered `hidden sm:inline-flex` on
+   the trigger, so hide it for phones here — it was rendering clipped */
+@media (max-width: 639px) {
+  .cmdk-trigger {
+    display: none;
+  }
+}
 .cmdk-trigger kbd {
   font-family: var(--font-geist-mono), monospace;
   font-size: 0.66rem;
