@@ -760,19 +760,28 @@ function HopeSatellite({
 
 /** When active, dollies the camera toward the target for the launch zoom.
  *  `orbit` adds a lateral/vertical arc so it swoops AROUND the target (the Sun). */
+/** Cinematic launch move. The camera runs STRAIGHT down a fixed approach axis
+ *  (computed once at launch — recomputing direction every frame while lerping
+ *  is what made the old move corkscrew and read as a spin), with a speed-ramped
+ *  run-in, off-center framing, a bank roll that levels out, building rumble,
+ *  and a dolly-zoom stretch as the warp takes over. `orbit` = the Sun target
+ *  (larger framing distances, stronger sway). */
 function LaunchDolly({ active, targetRef, orbit = false }: { active: boolean; targetRef: React.RefObject<Group | null>; orbit?: boolean }) {
   const target = useMemo(() => new Vector3(), []);
-  const dir = useMemo(() => new Vector3(), []);
+  const axis = useMemo(() => new Vector3(), []);
+  const side = useMemo(() => new Vector3(), []);
   const desired = useMemo(() => new Vector3(), []);
-  const tangent = useMemo(() => new Vector3(), []);
+  const lookPt = useMemo(() => new Vector3(), []);
   const UP = useMemo(() => new Vector3(0, 1, 0), []);
   const prog = useRef(0);
+  const startDist = useRef(0);
   const baseFov = useRef<number | null>(null);
 
   useFrame((state, delta) => {
     const cam = state.camera as PerspectiveCamera;
     if (!active) {
       prog.current = 0;
+      startDist.current = 0;
       if (baseFov.current !== null) {
         cam.fov = baseFov.current;
         cam.updateProjectionMatrix();
@@ -781,30 +790,48 @@ function LaunchDolly({ active, targetRef, orbit = false }: { active: boolean; ta
       return;
     }
     if (!targetRef.current) return;
-    if (baseFov.current === null) baseFov.current = cam.fov;
-
-    // Eased approach: gentle start (lock-on beat), committed middle, soft
-    // arrival — no terminal dive. The warp overlay sells the final jump.
-    prog.current = Math.min(1, prog.current + delta / 1.85);
-    const t = prog.current;
-    const p = t * t * (3 - 2 * t); // smoothstep
-
     targetRef.current.getWorldPosition(target);
-    dir.copy(target).sub(state.camera.position).normalize();
-    const standoff = 0.5 - 0.34 * p; // 0.5 → 0.16: close, but never inside it
-    desired.copy(target).sub(dir.multiplyScalar(standoff));
-    // both launches bank through a lateral arc; the Sun's is a full swoop
-    const arcScale = orbit ? 1.1 : 0.34;
-    const arc = Math.sin(t * Math.PI);
-    tangent.crossVectors(dir, UP).normalize();
-    desired.addScaledVector(tangent, arc * arcScale);
-    desired.addScaledVector(UP, Math.sin(t * Math.PI * 0.8) * (orbit ? 0.4 : 0.16));
+    if (startDist.current === 0) {
+      baseFov.current = cam.fov;
+      axis.copy(cam.position).sub(target);
+      startDist.current = axis.length();
+      axis.normalize();
+      side.crossVectors(UP, axis).normalize(); // fixed screen-lateral of the run
+    }
 
-    state.camera.position.lerp(desired, 0.05 + 0.2 * p);
-    state.camera.lookAt(target);
-    // lens punch: the FOV tightens as we commit — speed you can feel without
-    // the geometry blowing past the near plane
-    cam.fov = baseFov.current - 9 * p;
+    prog.current = Math.min(1, prog.current + delta / 1.9);
+    const t = prog.current;
+    // speed ramp: a quiet drift for the first beat (lock-on reads), then a
+    // committed run-in that keeps accelerating into the jump
+    const ramp =
+      t < 0.4
+        ? 0.22 * (t / 0.4) * (t / 0.4)
+        : 0.22 + 0.78 * (1 - Math.pow(1 - (t - 0.4) / 0.6, 2.6));
+    const endDist = orbit ? 0.52 : 0.24;
+    const dist = startDist.current + (endDist - startDist.current) * ramp;
+    desired.copy(target).addScaledVector(axis, dist);
+    // one gentle sway gives the run shape — a lateral drift, not a circle
+    desired.addScaledVector(side, Math.sin(t * Math.PI) * (orbit ? 0.42 : 0.1));
+    desired.y += Math.sin(t * Math.PI * 0.9) * (orbit ? 0.18 : 0.05);
+
+    cam.position.lerp(desired, 1 - Math.exp(-delta * (3 + 7 * t)));
+    // engine rumble builds into the jump — tiny and high-frequency
+    const rumble = t * t * t * (orbit ? 0.016 : 0.01);
+    cam.position.x += (Math.random() - 0.5) * rumble;
+    cam.position.y += (Math.random() - 0.5) * rumble;
+
+    // off-center framing: the target rides ~a third from center, not bullseyed
+    lookPt
+      .copy(target)
+      .addScaledVector(side, orbit ? 0.26 : 0.06)
+      .addScaledVector(UP, orbit ? 0.1 : 0.025);
+    cam.lookAt(lookPt);
+    cam.rotateZ(-0.09 * Math.sin(t * Math.PI)); // bank into the run, level for the jump
+
+    // lens: slight punch-in through the run, then a dolly-zoom stretch — the
+    // background pulls away while the target holds its size
+    const stretch = Math.max(0, (t - 0.72) / 0.28);
+    cam.fov = (baseFov.current ?? 40) - 6 * Math.min(t / 0.72, 1) + 24 * stretch * stretch;
     cam.updateProjectionMatrix();
   });
   return null;
@@ -1037,7 +1064,10 @@ export function SpaceHero() {
     phase !== "idle" || (!reduceMotion && inView) ? "always" : "demand";
 
   return (
-    <section ref={heroRef} className="hero relative flex min-h-[92svh] items-start overflow-hidden pt-16 pb-12 sm:min-h-screen sm:pt-24 sm:pb-16">
+    <section
+      ref={heroRef}
+      className={`hero relative flex min-h-[92svh] items-start overflow-hidden pt-16 pb-12 sm:min-h-screen sm:pt-24 sm:pb-16 ${phase !== "idle" ? "is-launching" : ""}`}
+    >
       <motion.div
         aria-hidden="true"
         className="hero-canvas absolute inset-0"
