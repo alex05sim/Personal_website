@@ -20,6 +20,10 @@ export type Recommendation = {
   visitorName: string;
   place: string;
   comment: string;
+  /** Geographic pin (degrees) placed by clicking the 3D globe. */
+  lat: number | null;
+  lon: number | null;
+  /** Legacy screen-percent pin fields from the old overlay system; unused now. */
   x: number | null;
   y: number | null;
   createdAt: number;
@@ -105,23 +109,28 @@ export async function listRecommendations(): Promise<Recommendation[]> {
   return useRedis ? redisList() : fileList();
 }
 
+function clampRange(value: unknown, min: number, max: number): number | null {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.max(min, Math.min(max, value))
+    : null;
+}
+
 export async function addRecommendation(input: {
   visitorName: string;
   place: string;
   comment?: string;
-  x?: number | null;
-  y?: number | null;
+  lat?: number | null;
+  lon?: number | null;
 }): Promise<Recommendation> {
-  const clamp = (value: number | null | undefined) =>
-    typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : null;
-
   const rec: Recommendation = {
     id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     visitorName: input.visitorName.trim().slice(0, MAX_VISITOR_NAME_LENGTH),
     place: input.place.trim().slice(0, MAX_PLACE_LENGTH),
     comment: input.comment?.trim().slice(0, MAX_COMMENT_LENGTH) ?? "",
-    x: clamp(input.x),
-    y: clamp(input.y),
+    lat: clampRange(input.lat, -90, 90),
+    lon: clampRange(input.lon, -180, 180),
+    x: null,
+    y: null,
     createdAt: Date.now(),
   };
 
@@ -148,11 +157,6 @@ function parseRecommendation(value: unknown): Recommendation | null {
     return null;
   }
 
-  const coordinate = (value: unknown) =>
-    typeof value === "number" && Number.isFinite(value)
-      ? Math.max(0, Math.min(100, value))
-      : null;
-
   return {
     id: item.id.slice(0, 100),
     visitorName:
@@ -161,8 +165,10 @@ function parseRecommendation(value: unknown): Recommendation | null {
         : "Visitor",
     place: item.place.slice(0, MAX_PLACE_LENGTH),
     comment: typeof item.comment === "string" ? item.comment.slice(0, MAX_COMMENT_LENGTH) : "",
-    x: coordinate(item.x),
-    y: coordinate(item.y),
+    lat: clampRange(item.lat, -90, 90),
+    lon: clampRange(item.lon, -180, 180),
+    x: clampRange(item.x, 0, 100),
+    y: clampRange(item.y, 0, 100),
     createdAt: item.createdAt,
   };
 }

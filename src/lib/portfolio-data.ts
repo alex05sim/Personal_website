@@ -139,6 +139,8 @@ export type TravelStop = {
   lon: number;
   /** Home base — the anchor the globe's signal arcs radiate from. */
   home?: boolean;
+  /** Photo under public/travel/ — the card shows a placeholder until the file exists. */
+  photoHref?: string;
 };
 
 export const profile = {
@@ -655,6 +657,7 @@ export const travelStops: TravelStop[] = [
     lat: 37.8715,
     lon: -122.273,
     home: true,
+    photoHref: "/travel/berkeley.jpg",
   },
   {
     place: "Olney, Maryland",
@@ -662,6 +665,7 @@ export const travelStops: TravelStop[] = [
     coordinates: "39.1532 N / 77.0669 W",
     lat: 39.1532,
     lon: -77.0669,
+    photoHref: "/travel/olney.jpg",
   },
   {
     place: "Fort Meade, Maryland",
@@ -669,6 +673,7 @@ export const travelStops: TravelStop[] = [
     coordinates: "39.1080 N / 76.7710 W",
     lat: 39.108,
     lon: -76.771,
+    photoHref: "/travel/fort-meade.jpg",
   },
 ];
 

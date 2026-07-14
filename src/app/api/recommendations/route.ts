@@ -155,9 +155,23 @@ export async function POST(request: Request) {
     place?: unknown;
     comment?: unknown;
     website?: unknown;
-    x?: unknown;
-    y?: unknown;
+    lat?: unknown;
+    lon?: unknown;
   };
+
+  // optional globe pin — degrees, or absent
+  const pinCoord = (value: unknown, limit: number): number | null | undefined => {
+    if (value === null || value === undefined) return null;
+    if (typeof value !== "number" || !Number.isFinite(value) || Math.abs(value) > limit) {
+      return undefined; // invalid
+    }
+    return value;
+  };
+  const lat = pinCoord(payload.lat, 90);
+  const lon = pinCoord(payload.lon, 180);
+  if (lat === undefined || lon === undefined || (lat === null) !== (lon === null)) {
+    return Response.json({ error: "invalid pin coordinates" }, { status: 400 });
+  }
 
   if (typeof payload.website === "string" && payload.website.trim()) {
     return Response.json({ error: "invalid submission" }, { status: 400 });
@@ -219,8 +233,8 @@ export async function POST(request: Request) {
       visitorName,
       place,
       comment,
-      x: typeof payload.x === "number" ? payload.x : null,
-      y: typeof payload.y === "number" ? payload.y : null,
+      lat,
+      lon,
     });
     const items = await listRecommendations();
     return Response.json({ item, items }, { status: 201 });

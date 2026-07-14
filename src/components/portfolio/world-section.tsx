@@ -1,14 +1,8 @@
 "use client";
 
-import { Camera, CheckCircle2, Globe2, MapPin, Route, Send, UserRound, Users } from "lucide-react";
+import { Camera, CheckCircle2, Globe2, MapPin, Route, Send, UserRound, Users, X } from "lucide-react";
 import dynamic from "next/dynamic";
-import {
-  type FormEvent,
-  type KeyboardEvent as ReactKeyboardEvent,
-  type MouseEvent,
-  useEffect,
-  useState,
-} from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { suggestedPlaces, travelStops } from "@/lib/portfolio-data";
 import { CaliforniaSky } from "../california-sky";
 import { Reveal } from "./shared";
@@ -20,6 +14,7 @@ const TravelGlobe = dynamic(() => import("../travel-globe").then((m) => m.Travel
 });
 
 type GlobeFocus = { lat: number; lon: number; seq: number };
+type GlobePin = { lat: number; lon: number };
 
 const globeStops = travelStops.map((stop) => ({
   place: stop.place,
@@ -33,8 +28,8 @@ type VisitorRecommendation = {
   visitorName: string;
   place: string;
   comment: string;
-  x: number | null;
-  y: number | null;
+  lat: number | null;
+  lon: number | null;
 };
 
 const starterRecommendations = (): VisitorRecommendation[] =>
@@ -42,9 +37,37 @@ const starterRecommendations = (): VisitorRecommendation[] =>
     visitorName: "Community pick",
     place,
     comment: "",
-    x: null,
-    y: null,
+    lat: null,
+    lon: null,
   }));
+
+/** A travel-log photo that gracefully falls back to the camera placeholder
+ *  until the image file exists under public/travel/. */
+function TravelPhoto({ src, alt }: { src?: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth > 0) setLoaded(true);
+  }, []);
+
+  return (
+    <div className={`travel-photo ${loaded ? "has-photo" : ""}`}>
+      {!loaded ? <Camera size={20} /> : null}
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          ref={imgRef}
+          src={src}
+          alt={alt}
+          onLoad={() => setLoaded(true)}
+          style={{ display: loaded ? "block" : "none" }}
+        />
+      ) : null}
+    </div>
+  );
+}
 
 export function WorldSection() {
   const [visitorName, setVisitorName] = useState("");
@@ -54,26 +77,7 @@ export function WorldSection() {
   const [submitting, setSubmitting] = useState(false);
   const [globeFocus, setGlobeFocus] = useState<GlobeFocus | null>(null);
   const [iss, setIss] = useState<{ lat: number; lon: number } | null | undefined>(undefined);
-  const [pendingPin, setPendingPin] = useState<{ x: number; y: number } | null>(null);
-  const [placedPins, setPlacedPins] = useState<Array<{ label: string; x: number; y: number }>>(
-    () => {
-      if (typeof window === "undefined") {
-        return [];
-      }
-
-      const saved = window.localStorage.getItem("portfolio-world-pins");
-
-      if (!saved) {
-        return [];
-      }
-
-      try {
-        return JSON.parse(saved) as Array<{ label: string; x: number; y: number }>;
-      } catch {
-        return [];
-      }
-    },
-  );
+  const [pendingPin, setPendingPin] = useState<GlobePin | null>(null);
   const [recommendations, setRecommendations] = useState<VisitorRecommendation[]>(() => {
     if (typeof window === "undefined") {
       return starterRecommendations();
@@ -94,8 +98,8 @@ export function WorldSection() {
         visitorName: "Community pick",
         place: item,
         comment: "",
-        x: null,
-        y: null,
+        lat: null,
+        lon: null,
       }));
     } catch {
       return starterRecommendations();
@@ -108,31 +112,35 @@ export function WorldSection() {
       visitorName?: string;
       place: string;
       comment?: string;
-      x: number | null;
-      y: number | null;
+      lat?: number | null;
+      lon?: number | null;
     }>,
   ) {
     const normalized: VisitorRecommendation[] = entries.map((entry) => ({
-      ...entry,
+      id: entry.id,
+      place: entry.place,
       visitorName: entry.visitorName?.trim() || "Visitor",
       comment: entry.comment ?? "",
+      lat: typeof entry.lat === "number" ? entry.lat : null,
+      lon: typeof entry.lon === "number" ? entry.lon : null,
     }));
     setRecommendations(
       normalized.length
         ? normalized.slice(0, 12)
         : starterRecommendations(),
     );
-    setPlacedPins(
-      entries
-        .filter((entry) => typeof entry.x === "number" && typeof entry.y === "number")
-        .slice(0, 40)
-        .map((entry) => ({ label: entry.place, x: entry.x as number, y: entry.y as number })),
-    );
     window.localStorage.setItem(
       "portfolio-place-recommendations",
       JSON.stringify(normalized.map((entry) => entry.place)),
     );
   }
+
+  const visitorPins = recommendations
+    .filter((entry): entry is VisitorRecommendation & GlobePin =>
+      typeof entry.lat === "number" && typeof entry.lon === "number",
+    )
+    .slice(0, 40)
+    .map((entry) => ({ place: entry.place, lat: entry.lat, lon: entry.lon }));
 
   useEffect(() => {
     let cancelled = false;
@@ -185,8 +193,8 @@ export function WorldSection() {
           place: trimmedPlace,
           comment: trimmedComment,
           website: "",
-          x: pin?.x ?? null,
-          y: pin?.y ?? null,
+          lat: pin?.lat ?? null,
+          lon: pin?.lon ?? null,
         }),
       });
 
@@ -210,29 +218,6 @@ export function WorldSection() {
     } finally {
       setSubmitting(false);
     }
-  }
-
-  function placePin(event: MouseEvent<HTMLDivElement>) {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-    const dx = x - 50;
-    const dy = y - 50;
-
-    if (dx * dx + dy * dy > 46 * 46) {
-      return;
-    }
-
-    setPendingPin({ x, y });
-  }
-
-  function placeKeyboardPin(event: ReactKeyboardEvent<HTMLDivElement>) {
-    if (event.key !== "Enter" && event.key !== " ") {
-      return;
-    }
-
-    event.preventDefault();
-    setPendingPin({ x: 50, y: 50 });
   }
 
   return (
@@ -343,11 +328,7 @@ export function WorldSection() {
                     </div>
                     {recommendation.comment ? <p>{recommendation.comment}</p> : null}
                   </div>
-                  <em>
-                    {placedPins.some((pin) => pin.label === recommendation.place)
-                      ? "Pinned"
-                      : "Suggested"}
-                  </em>
+                  <em>{typeof recommendation.lat === "number" ? "Pinned" : "Suggested"}</em>
                 </div>
               ))}
             </div>
@@ -357,35 +338,39 @@ export function WorldSection() {
         </Reveal>
 
         <div className="world-console">
-          <div
-            aria-label="Spin globe and click to place recommendation marker"
-            className="world-orb world-orb-3d"
-            onClick={placePin}
-            onKeyDown={placeKeyboardPin}
-            role="button"
-            tabIndex={0}
-          >
-            <TravelGlobe stops={globeStops} focus={globeFocus} onIssUpdate={setIss} />
-            {placedPins.map((pin) => (
-              <span
-                className="world-pin user-pin"
-                key={`${pin.label}-${pin.x}-${pin.y}`}
-                style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
-                title={pin.label}
-              />
-            ))}
-            {pendingPin ? (
-              <span
-                className="world-pin pending-pin"
-                style={{ left: `${pendingPin.x}%`, top: `${pendingPin.y}%` }}
-              />
-            ) : null}
-            <span className="world-hint">{pendingPin ? "Marker staged" : "Click to place"}</span>
+          <div className="world-orb world-orb-3d">
+            <TravelGlobe
+              stops={globeStops}
+              focus={globeFocus}
+              visitorPins={visitorPins}
+              pendingPin={pendingPin}
+              onGlobePick={(pin) => setPendingPin(pin)}
+              onIssUpdate={setIss}
+            />
+            <span className="world-hint">
+              {pendingPin ? (
+                <>
+                  Pin staged at {Math.abs(pendingPin.lat).toFixed(1)}°
+                  {pendingPin.lat >= 0 ? "N" : "S"} / {Math.abs(pendingPin.lon).toFixed(1)}°
+                  {pendingPin.lon >= 0 ? "E" : "W"}
+                  <button
+                    aria-label="Clear staged pin"
+                    className="world-hint-clear"
+                    onClick={() => setPendingPin(null)}
+                    type="button"
+                  >
+                    <X size={12} />
+                  </button>
+                </>
+              ) : (
+                "Drag to spin · click to drop a pin"
+              )}
+            </span>
           </div>
 
           <div className="world-readout" aria-hidden="true">
             <span>Interactive globe</span>
-            <strong>{placedPins.length + travelStops.length} live markers</strong>
+            <strong>{visitorPins.length + travelStops.length} live markers</strong>
           </div>
           <div className="world-readout world-readout-iss">
             <span>ISS ground track</span>
@@ -421,9 +406,7 @@ export function WorldSection() {
                 type="button"
                 aria-label={`Show ${stop.place} on the globe`}
               >
-                <div className="travel-photo">
-                  <Camera size={20} />
-                </div>
+                <TravelPhoto src={stop.photoHref} alt={`Photo from ${stop.place}`} />
                 <div>
                   <div className="travel-card-meta">
                     <span>{String(index + 1).padStart(2, "0")}</span>

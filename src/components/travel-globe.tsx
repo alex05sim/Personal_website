@@ -22,6 +22,16 @@ const R = 1.42;
 
 export type GlobeStop = { place: string; lat: number; lon: number; home?: boolean };
 export type GlobeFocus = { lat: number; lon: number; seq: number };
+export type GlobePin = { lat: number; lon: number };
+
+/** Inverse of latLonToVec3 — recover lat/lon (degrees) from a local-space point. */
+function vecToLatLon(p: Vector3): GlobePin {
+  const r = p.length();
+  const lat = 90 - (Math.acos(p.y / r) * 180) / Math.PI;
+  let lon = (Math.atan2(p.z, -p.x) * 180) / Math.PI - 180;
+  if (lon < -180) lon += 360;
+  return { lat, lon };
+}
 
 /** Great-circle path between two lat/lon points, lifted off the surface so it
  *  reads as a signal arc rather than a ground route. */
@@ -87,6 +97,39 @@ function StopPin({ stop }: { stop: GlobeStop }) {
           color={color}
           transparent
           opacity={0.28}
+          blending={AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+/** The staged (not yet submitted) visitor pin — bright white and pulsing so
+ *  it's obviously distinct from saved pins. */
+function PendingPin({ pin }: { pin: GlobePin }) {
+  const glowRef = useRef<Mesh>(null);
+  const position = useMemo(
+    () => new Vector3(...latLonToVec3(pin.lat, pin.lon, R * 1.006)),
+    [pin.lat, pin.lon],
+  );
+  useFrame((state) => {
+    if (glowRef.current) {
+      glowRef.current.scale.setScalar(1 + Math.sin(state.clock.elapsedTime * 3.2) * 0.35);
+    }
+  });
+  return (
+    <group position={position}>
+      <mesh>
+        <sphereGeometry args={[0.024, 12, 12]} />
+        <meshBasicMaterial color="#ffffff" />
+      </mesh>
+      <mesh ref={glowRef}>
+        <sphereGeometry args={[0.055, 12, 12]} />
+        <meshBasicMaterial
+          color="#ffffff"
+          transparent
+          opacity={0.3}
           blending={AdditiveBlending}
           depthWrite={false}
         />
@@ -173,10 +216,16 @@ function IssMarker({
 function TravelEarth({
   stops,
   focus,
+  visitorPins,
+  pendingPin,
+  onGlobePick,
   onIssUpdate,
 }: {
   stops: GlobeStop[];
   focus: GlobeFocus | null;
+  visitorPins: Array<GlobePin & { place: string }>;
+  pendingPin: GlobePin | null;
+  onGlobePick?: (pin: GlobePin) => void;
   onIssUpdate?: (pos: { lat: number; lon: number } | null) => void;
 }) {
   const groupRef = useRef<Group>(null);
@@ -186,6 +235,7 @@ function TravelEarth({
   const velocityRef = useRef(0);
   const focusTargetY = useRef<number | null>(null);
   const lastFocusSeq = useRef(0);
+  const pickStart = useRef<{ x: number; y: number } | null>(null);
 
   const textures = useMemo(() => {
     const loader = new TextureLoader();
@@ -281,6 +331,7 @@ function TravelEarth({
         draggingRef.current = true;
         focusTargetY.current = null; // a grab cancels any pending focus glide
         lastPointerRef.current = { x: event.clientX, y: event.clientY };
+        pickStart.current = { x: event.clientX, y: event.clientY };
       }}
       onPointerLeave={() => {
         draggingRef.current = false;
@@ -295,8 +346,24 @@ function TravelEarth({
         velocityRef.current = next;
         lastPointerRef.current = { x: event.clientX, y: event.clientY };
       }}
-      onPointerUp={() => {
+      onPointerUp={(event) => {
         draggingRef.current = false;
+        const start = pickStart.current;
+        pickStart.current = null;
+        if (!start || !onGlobePick || !groupRef.current) return;
+        if (Math.hypot(event.clientX - start.x, event.clientY - start.y) >= 6) return;
+        // A genuine click, not a drag. The raycast may have hit the atmosphere
+        // or cloud shells (they sit in front of the surface), so intersect the
+        // pointer ray with the EARTH sphere analytically for an exact pick.
+        const b = event.ray.origin.dot(event.ray.direction);
+        const c = event.ray.origin.lengthSq() - R * R;
+        const disc = b * b - c;
+        if (disc < 0) return; // ray misses the globe
+        const world = event.ray.origin
+          .clone()
+          .addScaledVector(event.ray.direction, -b - Math.sqrt(disc));
+        const local = groupRef.current.worldToLocal(world);
+        onGlobePick(vecToLatLon(local));
       }}
     >
       <directionalLight
@@ -329,6 +396,30 @@ function TravelEarth({
         <StopPin key={stop.place} stop={stop} />
       ))}
 
+      {visitorPins.map((pin, i) => (
+        <group
+          key={`${pin.place}-${i}`}
+          position={new Vector3(...latLonToVec3(pin.lat, pin.lon, R * 1.005))}
+        >
+          <mesh>
+            <sphereGeometry args={[0.016, 10, 10]} />
+            <meshBasicMaterial color="#aeb6c8" />
+          </mesh>
+          <mesh>
+            <sphereGeometry args={[0.036, 10, 10]} />
+            <meshBasicMaterial
+              color="#aeb6c8"
+              transparent
+              opacity={0.22}
+              blending={AdditiveBlending}
+              depthWrite={false}
+            />
+          </mesh>
+        </group>
+      ))}
+
+      {pendingPin ? <PendingPin pin={pendingPin} /> : null}
+
       {arcs.map((arc) => (
         <group key={arc.stop.place}>
           <primitive object={arc.line} />
@@ -344,10 +435,16 @@ function TravelEarth({
 export function TravelGlobe({
   stops = [],
   focus = null,
+  visitorPins = [],
+  pendingPin = null,
+  onGlobePick,
   onIssUpdate,
 }: {
   stops?: GlobeStop[];
   focus?: GlobeFocus | null;
+  visitorPins?: Array<GlobePin & { place: string }>;
+  pendingPin?: GlobePin | null;
+  onGlobePick?: (pin: GlobePin) => void;
   onIssUpdate?: (pos: { lat: number; lon: number } | null) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -377,7 +474,14 @@ export function TravelGlobe({
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
         <ambientLight intensity={0.02} />
-        <TravelEarth stops={stops} focus={focus} onIssUpdate={onIssUpdate} />
+        <TravelEarth
+          stops={stops}
+          focus={focus}
+          visitorPins={visitorPins}
+          pendingPin={pendingPin}
+          onGlobePick={onGlobePick}
+          onIssUpdate={onIssUpdate}
+        />
       </Canvas>
     </CanvasErrorBoundary>
   );
