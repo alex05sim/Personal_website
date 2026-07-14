@@ -1,6 +1,17 @@
 "use client";
 
-import { Camera, CheckCircle2, Globe2, MapPin, Route, Send, UserRound, Users, X } from "lucide-react";
+import {
+  Camera,
+  CheckCircle2,
+  Globe2,
+  MapPin,
+  Maximize2,
+  Route,
+  Send,
+  UserRound,
+  Users,
+  X,
+} from "lucide-react";
 import dynamic from "next/dynamic";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { suggestedPlaces, travelStops } from "@/lib/portfolio-data";
@@ -42,8 +53,9 @@ const starterRecommendations = (): VisitorRecommendation[] =>
   }));
 
 /** A travel-log photo that gracefully falls back to the camera placeholder
- *  until the image file exists under public/travel/. */
-function TravelPhoto({ src, alt }: { src?: string; alt: string }) {
+ *  until the image file exists under public/travel/. Once loaded it gains an
+ *  enlarge button (the card itself flies the globe, so zoom is its own hit). */
+function TravelPhoto({ src, alt, onZoom }: { src?: string; alt: string; onZoom?: () => void }) {
   const [loaded, setLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
@@ -65,6 +77,19 @@ function TravelPhoto({ src, alt }: { src?: string; alt: string }) {
           style={{ display: loaded ? "block" : "none" }}
         />
       ) : null}
+      {loaded && onZoom ? (
+        <button
+          aria-label={`Enlarge photo of ${alt}`}
+          className="travel-photo-zoom"
+          onClick={(event) => {
+            event.stopPropagation();
+            onZoom();
+          }}
+          type="button"
+        >
+          <Maximize2 size={13} />
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -76,8 +101,23 @@ export function WorldSection() {
   const [formStatus, setFormStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [globeFocus, setGlobeFocus] = useState<GlobeFocus | null>(null);
+  const [activeStop, setActiveStop] = useState<string | null>(null);
+  const [zoomPhoto, setZoomPhoto] = useState<{ src: string; caption: string } | null>(null);
   const [iss, setIss] = useState<{ lat: number; lon: number } | null | undefined>(undefined);
   const [pendingPin, setPendingPin] = useState<GlobePin | null>(null);
+
+  useEffect(() => {
+    if (!zoomPhoto) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setZoomPhoto(null);
+    };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [zoomPhoto]);
   const [recommendations, setRecommendations] = useState<VisitorRecommendation[]>(() => {
     if (typeof window === "undefined") {
       return starterRecommendations();
@@ -396,31 +436,74 @@ export function WorldSection() {
               </strong>
             </div>
             <p className="travel-hint">Click a stop to swing the globe to it.</p>
-            {travelStops.map((stop, index) => (
-              <button
-                className={`travel-card ${globeFocus && globeFocus.lat === stop.lat && globeFocus.lon === stop.lon ? "is-active" : ""}`}
-                key={stop.place}
-                onClick={() =>
-                  setGlobeFocus((prev) => ({ lat: stop.lat, lon: stop.lon, seq: (prev?.seq ?? 0) + 1 }))
-                }
-                type="button"
-                aria-label={`Show ${stop.place} on the globe`}
-              >
-                <TravelPhoto src={stop.photoHref} alt={`Photo from ${stop.place}`} />
-                <div>
-                  <div className="travel-card-meta">
-                    <span>{String(index + 1).padStart(2, "0")}</span>
-                    <span className="visited-badge">
-                      <CheckCircle2 size={12} /> Visited
+            {travelStops.map((stop, index) => {
+              const flyTo = () => {
+                setActiveStop(stop.place);
+                setGlobeFocus((prev) => ({
+                  lat: stop.lat,
+                  lon: stop.lon,
+                  seq: (prev?.seq ?? 0) + 1,
+                }));
+              };
+              return (
+                <div
+                  aria-label={`Show ${stop.place} on the globe`}
+                  className={`travel-card ${activeStop === stop.place ? "is-active" : ""}`}
+                  key={stop.place}
+                  onClick={flyTo}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      flyTo();
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <TravelPhoto
+                    src={stop.photoHref}
+                    alt={`Photo from ${stop.place}`}
+                    onZoom={
+                      stop.photoHref
+                        ? () =>
+                            setZoomPhoto({
+                              src: stop.photoHref as string,
+                              caption: `${stop.place} — ${stop.note}`,
+                            })
+                        : undefined
+                    }
+                  />
+                  <div>
+                    <div className="travel-card-meta">
+                      <span>{String(index + 1).padStart(2, "0")}</span>
+                      <span className="visited-badge">
+                        <CheckCircle2 size={12} /> Visited
+                      </span>
+                    </div>
+                    <h3>{stop.place}</h3>
+                    <p>{stop.note}</p>
+                    <em>{stop.coordinates}</em>
+                    <span className="travel-fly" aria-hidden="true">
+                      {activeStop === stop.place ? "On the globe ·" : "Fly the globe here →"}
                     </span>
                   </div>
-                  <h3>{stop.place}</h3>
-                  <p>{stop.note}</p>
-                  <em>{stop.coordinates}</em>
                 </div>
-              </button>
-            ))}
+              );
+            })}
           </div>
+
+          {zoomPhoto ? (
+            <div
+              className="research-lightbox"
+              role="dialog"
+              aria-label="Enlarged travel photo"
+              onClick={() => setZoomPhoto(null)}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={zoomPhoto.src} alt={zoomPhoto.caption} />
+              <p>{zoomPhoto.caption}</p>
+            </div>
+          ) : null}
         </div>
       </div>
     </section>
