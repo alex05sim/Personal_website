@@ -201,7 +201,7 @@ export function ProjectDetail({
 
         <div className="mt-16 grid gap-12 lg:grid-cols-[1fr_1.45fr]">
           <div className="detail-section">
-            <p className="kicker">Still to add</p>
+            <p className="kicker">Next steps</p>
             <ul className="detail-bullet-list mt-5">
               {project.nextSteps.map((step) => (
                 <li key={step}>{step}</li>

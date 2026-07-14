@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, FileText } from "lucide-react";
 import Link from "next/link";
 import { footerNavigation, profile, socials } from "@/lib/portfolio-data";
 
@@ -28,6 +28,10 @@ export function SiteFooter() {
 
           <div className="footer-social">
             <span className="footer-label">Elsewhere</span>
+            <a href={profile.resumeHref} target="_blank" rel="noreferrer">
+              <FileText size={15} />
+              Resume (PDF)
+            </a>
             {socials.map((social) => {
               const Icon = social.icon;
               return (

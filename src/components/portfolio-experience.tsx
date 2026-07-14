@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, BriefcaseBusiness, ExternalLink, GraduationCap, Search } from "lucide-react";
+import { ArrowUpRight, BriefcaseBusiness, Download, ExternalLink, GraduationCap, Search } from "lucide-react";
 import { motion, useScroll, useTransform } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -103,6 +103,16 @@ export function FloatingTabs() {
             </Link>
           );
         })}
+        <a
+          className="nav-resume"
+          href={profile.resumeHref}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Download resume (PDF)"
+        >
+          <Download size={13} />
+          Resume
+        </a>
         <button
           type="button"
           className="cmdk-trigger ml-2 hidden sm:inline-flex"

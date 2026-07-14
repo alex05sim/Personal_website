@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import fs from "fs";
 import path from "path";
-import { projects } from "../src/lib/portfolio-data";
+import { projects, travelStops } from "../src/lib/portfolio-data";
 
 // These are deliberately content/status checks, not WebGL checks: the 3D canvases
 // may not get a GPU context in headless CI, and the CanvasErrorBoundary is supposed
@@ -45,9 +45,68 @@ test("every project detail page exposes clear work sections", async ({ page }) =
     await page.goto(`/projects/${project.slug}`);
     await expect(page.getByRole("heading", { level: 1 })).toContainText(project.title);
     await expect(page.locator(".chip").filter({ hasText: project.verification }).first()).toBeVisible();
-    await expect(page.getByText("Problem -> solution", { exact: true })).toBeVisible();
-    await expect(page.getByText("System flow", { exact: true })).toBeVisible();
+    if (project.slug === "solar-cycle-prediction") {
+      // the solar page swaps the standard sections for the research write-up
+      await expect(page.getByText("Research write-up // ButterflAI")).toBeVisible();
+      await expect(page.locator(".research-fig").first()).toBeVisible();
+    } else {
+      await expect(page.getByText("Problem -> solution", { exact: true })).toBeVisible();
+      await expect(page.getByText("System flow", { exact: true })).toBeVisible();
+    }
   }
+});
+
+test("all 11 solar research figures ship with the site", async () => {
+  const figures = [
+    "butterfly-diagram",
+    "universal-mean-path",
+    "sigma-envelope",
+    "amplitude-peaks",
+    "shape-vs-amplitude",
+    "real-vs-synthetic",
+    "residual-sanity",
+    "amplitude-split",
+    "noise-schedule",
+    "forward-trajectory",
+    "limiting-behavior",
+  ];
+  const missing = figures.filter(
+    (name) => !fs.existsSync(path.join(process.cwd(), "public", "research", `${name}.png`)),
+  );
+  expect(missing).toEqual([]);
+});
+
+test("world page shows interactive travel cards and the ISS readout", async ({ page }) => {
+  await page.goto("/world");
+  await expect(page.locator(".travel-card")).toHaveCount(travelStops.length);
+  await expect(page.getByText("ISS ground track")).toBeVisible();
+});
+
+test("recommendations API rejects a half-specified globe pin", async ({ request }) => {
+  const res = await request.post("/api/recommendations", {
+    data: {
+      visitorName: "Test",
+      place: "Testville",
+      comment: "A lovely place worth a visit.",
+      website: "",
+      lat: 10,
+      lon: null,
+    },
+  });
+  expect(res.status()).toBe(400);
+});
+
+test("resume is one click away from the top nav on every page", async ({ page }) => {
+  await page.goto("/");
+  const cta = page.getByRole("link", { name: "Download resume (PDF)" });
+  await expect(cta).toBeVisible();
+  await expect(cta).toHaveAttribute("href", "/resume.pdf");
+});
+
+test("the resume PDF actually ships", async ({ request }) => {
+  const res = await request.get("/resume.pdf");
+  expect(res.ok()).toBeTruthy();
+  expect(res.headers()["content-type"]).toContain("pdf");
 });
 
 test("the cubesat project mounts the PCB showcase section", async ({ page }) => {

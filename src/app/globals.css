@@ -347,6 +347,26 @@ input:focus-visible,
   font-weight: 550;
   transition: color 180ms ease;
 }
+/* persistent recruiter path — the resume is one click away on every page */
+.nav-resume {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: 0.5rem;
+  padding: 0.34rem 0.8rem;
+  border: 1px solid rgba(var(--accent-rgb), 0.45);
+  border-radius: 999px;
+  background: rgba(var(--accent-rgb), 0.08);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 180ms ease, border-color 180ms ease;
+}
+.nav-resume:hover {
+  background: rgba(var(--accent-rgb), 0.16);
+  border-color: rgba(var(--accent-rgb), 0.7);
+}
 .nav-tab::after {
   content: "";
   position: absolute;
