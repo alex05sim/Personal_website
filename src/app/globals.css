@@ -3008,6 +3008,48 @@ input:focus-visible,
   border-bottom: 1px solid var(--line);
   padding: 1rem 0;
 }
+/* travel cards are buttons now — clicking one swings the globe to that stop */
+button.travel-card {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+button.travel-card:hover {
+  background: rgba(var(--accent-rgb), 0.05);
+}
+button.travel-card.is-active {
+  border-bottom-color: rgba(var(--accent-rgb), 0.55);
+}
+button.travel-card:focus-visible {
+  outline: 2px solid rgba(var(--accent-rgb), 0.8);
+  outline-offset: 2px;
+}
+.travel-hint {
+  margin: 0.35rem 0 0.2rem;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+.world-readout-iss {
+  border-top: 0;
+  padding-top: 0.4rem;
+}
+.world-readout-iss strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.82rem;
+}
 .travel-photo {
   display: grid;
   aspect-ratio: 1;

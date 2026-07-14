@@ -19,6 +19,15 @@ const TravelGlobe = dynamic(() => import("../travel-globe").then((m) => m.Travel
   ssr: false,
 });
 
+type GlobeFocus = { lat: number; lon: number; seq: number };
+
+const globeStops = travelStops.map((stop) => ({
+  place: stop.place,
+  lat: stop.lat,
+  lon: stop.lon,
+  home: stop.home,
+}));
+
 type VisitorRecommendation = {
   id?: string;
   visitorName: string;
@@ -43,6 +52,8 @@ export function WorldSection() {
   const [comment, setComment] = useState("");
   const [formStatus, setFormStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [globeFocus, setGlobeFocus] = useState<GlobeFocus | null>(null);
+  const [iss, setIss] = useState<{ lat: number; lon: number } | null | undefined>(undefined);
   const [pendingPin, setPendingPin] = useState<{ x: number; y: number } | null>(null);
   const [placedPins, setPlacedPins] = useState<Array<{ label: string; x: number; y: number }>>(
     () => {
@@ -354,10 +365,7 @@ export function WorldSection() {
             role="button"
             tabIndex={0}
           >
-            <TravelGlobe />
-            <span className="world-pin pin-one" />
-            <span className="world-pin pin-two" />
-            <span className="world-pin pin-three" />
+            <TravelGlobe stops={globeStops} focus={globeFocus} onIssUpdate={setIss} />
             {placedPins.map((pin) => (
               <span
                 className="world-pin user-pin"
@@ -377,7 +385,18 @@ export function WorldSection() {
 
           <div className="world-readout" aria-hidden="true">
             <span>Interactive globe</span>
-            <strong>{placedPins.length + 3} visible markers</strong>
+            <strong>{placedPins.length + travelStops.length} live markers</strong>
+          </div>
+          <div className="world-readout world-readout-iss">
+            <span>ISS ground track</span>
+            <strong>
+              <span className="live-dot" aria-hidden="true" />
+              {iss === undefined
+                ? "Acquiring signal…"
+                : iss === null
+                  ? "Signal lost"
+                  : `${Math.abs(iss.lat).toFixed(1)}°${iss.lat >= 0 ? "N" : "S"} / ${Math.abs(iss.lon).toFixed(1)}°${iss.lon >= 0 ? "E" : "W"}`}
+            </strong>
           </div>
 
           <div className="travel-list">
@@ -391,8 +410,17 @@ export function WorldSection() {
                 {travelStops.length} stops
               </strong>
             </div>
+            <p className="travel-hint">Click a stop to swing the globe to it.</p>
             {travelStops.map((stop, index) => (
-              <article className="travel-card" key={stop.place}>
+              <button
+                className={`travel-card ${globeFocus && globeFocus.lat === stop.lat && globeFocus.lon === stop.lon ? "is-active" : ""}`}
+                key={stop.place}
+                onClick={() =>
+                  setGlobeFocus((prev) => ({ lat: stop.lat, lon: stop.lon, seq: (prev?.seq ?? 0) + 1 }))
+                }
+                type="button"
+                aria-label={`Show ${stop.place} on the globe`}
+              >
                 <div className="travel-photo">
                   <Camera size={20} />
                 </div>
@@ -407,7 +435,7 @@ export function WorldSection() {
                   <p>{stop.note}</p>
                   <em>{stop.coordinates}</em>
                 </div>
-              </article>
+              </button>
             ))}
           </div>
         </div>

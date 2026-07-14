@@ -135,6 +135,10 @@ export type TravelStop = {
   place: string;
   note: string;
   coordinates: string;
+  lat: number;
+  lon: number;
+  /** Home base — the anchor the globe's signal arcs radiate from. */
+  home?: boolean;
 };
 
 export const profile = {
@@ -648,16 +652,23 @@ export const travelStops: TravelStop[] = [
     place: "Berkeley, California",
     note: "Home base - coursework, research, and most of the building happens here.",
     coordinates: "37.8715 N / 122.2730 W",
+    lat: 37.8715,
+    lon: -122.273,
+    home: true,
   },
   {
     place: "Olney, Maryland",
     note: "Where I grew up, and close to where the NSA work happened.",
     coordinates: "39.1532 N / 77.0669 W",
+    lat: 39.1532,
+    lon: -77.0669,
   },
   {
     place: "Fort Meade, Maryland",
     note: "A year inside a secure, mission-critical environment.",
     coordinates: "39.1080 N / 76.7710 W",
+    lat: 39.108,
+    lon: -76.771,
   },
 ];
 
