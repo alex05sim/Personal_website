@@ -367,6 +367,41 @@ input:focus-visible,
   background: rgba(var(--accent-rgb), 0.16);
   border-color: rgba(var(--accent-rgb), 0.7);
 }
+/* quiet sibling toggle: the no-animation, recruiter-skim version */
+.nav-plain {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: 0.4rem;
+  padding: 0.34rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 550;
+  white-space: nowrap;
+  transition: color 180ms ease, border-color 180ms ease;
+}
+.nav-plain:hover {
+  color: #fff;
+  border-color: var(--line-2);
+}
+/* phones: icon-only pills + tighter tabs so the whole nav fits without scroll */
+@media (max-width: 639px) {
+  .nav-plain {
+    padding: 0.34rem 0.55rem;
+  }
+  .nav-plain-label,
+  .nav-resume-label {
+    display: none;
+  }
+  .nav-resume {
+    padding: 0.34rem 0.55rem;
+  }
+  .nav-tab {
+    padding: 0 0.45rem;
+  }
+}
 .nav-tab::after {
   content: "";
   position: absolute;

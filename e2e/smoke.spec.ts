@@ -109,6 +109,22 @@ test("the resume PDF actually ships", async ({ request }) => {
   expect(res.headers()["content-type"]).toContain("pdf");
 });
 
+test("plain mode is a visible round-trip toggle", async ({ page }) => {
+  await page.goto("/");
+  const toggle = page.getByRole("link", { name: "Switch to the plain text version" });
+  await expect(toggle).toBeVisible();
+  await toggle.click();
+  await expect(page).toHaveURL(/\/plain$/);
+  // the recruiter essentials live above the fold in plain mode
+  await expect(page.getByRole("link", { name: /resume \(pdf\)/i })).toBeVisible();
+  await expect(page.getByText(/Open to summer 2026/i)).toBeVisible();
+  // and the way back is explicit
+  const back = page.getByRole("link", { name: /fancy version/i });
+  await expect(back).toBeVisible();
+  await back.click();
+  await expect(page).toHaveURL(/\/$/);
+});
+
 test("the cubesat project mounts the PCB showcase section", async ({ page }) => {
   await page.goto("/projects/cubesat-telemetry-pcb");
   await expect(page.getByText("Operation HOPE // Mission brief")).toBeVisible();

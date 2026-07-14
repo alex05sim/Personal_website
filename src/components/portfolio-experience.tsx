@@ -1,6 +1,14 @@
 "use client";
 
-import { ArrowUpRight, BriefcaseBusiness, Download, ExternalLink, GraduationCap, Search } from "lucide-react";
+import {
+  ArrowUpRight,
+  BriefcaseBusiness,
+  Download,
+  ExternalLink,
+  GraduationCap,
+  Search,
+  Type,
+} from "lucide-react";
 import { motion, useScroll, useTransform } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -111,8 +119,17 @@ export function FloatingTabs() {
           aria-label="Download resume (PDF)"
         >
           <Download size={13} />
-          Resume
+          <span className="nav-resume-label">Resume</span>
         </a>
+        <Link
+          className="nav-plain"
+          href="/plain"
+          aria-label="Switch to the plain text version"
+          title="No animations, just the facts"
+        >
+          <Type size={13} />
+          <span className="nav-plain-label">Plain</span>
+        </Link>
         <button
           type="button"
           className="cmdk-trigger ml-2 hidden sm:inline-flex"
