@@ -18,12 +18,14 @@ function BlackHoleQA() {
   const [question, setQuestion] = useState("");
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [burst, setBurst] = useState(0);
 
   const active = blackHoleQA.find((item) => item.id === activeId);
 
   const feed = (id: string) => {
     setFedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
     setActiveId(id);
+    setBurst((b) => b + 1); // retriggers the accretion flare
   };
 
   async function submitQuestion(event: FormEvent<HTMLFormElement>) {
@@ -72,9 +74,28 @@ function BlackHoleQA() {
 
         {!reduce ? (
           <div className="bh-stage" aria-hidden="true">
-            <div className="bh-disk" />
-            <div className="bh-photon" />
+            <div className="bh-stars" />
+            <div className="bh-disk bh-disk-back">
+              <i />
+              <b />
+            </div>
+            <div className="bh-halo" />
+            {[0, 1, 2].map((n) => (
+              <div
+                className="bh-mote-orbit"
+                key={n}
+                style={{ "--mt": `${9 + n * 4}s`, animationDelay: `${-n * 3}s` } as React.CSSProperties}
+              >
+                <s />
+              </div>
+            ))}
             <div className="bh-core" />
+            <div className="bh-photon" />
+            <div className="bh-disk bh-disk-front">
+              <i />
+              <b />
+            </div>
+            {burst > 0 ? <div className="bh-burst" key={burst} /> : null}
             {blackHoleQA.map((item, index) => (
               <div
                 className="bh-orbit"

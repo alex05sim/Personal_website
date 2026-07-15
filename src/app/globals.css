@@ -3524,7 +3524,158 @@ input:focus-visible,
   aspect-ratio: 1;
   margin: 3rem auto 0;
 }
+/* faint starfield the hole sits against */
+.bh-stars {
+  position: absolute;
+  inset: -6%;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 22%, rgba(255, 255, 255, 0.8), transparent 60%),
+    radial-gradient(1px 1px at 78% 14%, rgba(255, 255, 255, 0.6), transparent 60%),
+    radial-gradient(1.5px 1.5px at 88% 66%, rgba(255, 255, 255, 0.7), transparent 60%),
+    radial-gradient(1px 1px at 30% 82%, rgba(255, 255, 255, 0.55), transparent 60%),
+    radial-gradient(1px 1px at 56% 8%, rgba(255, 255, 255, 0.5), transparent 60%),
+    radial-gradient(1.5px 1.5px at 8% 58%, rgba(255, 255, 255, 0.6), transparent 60%),
+    radial-gradient(1px 1px at 66% 90%, rgba(255, 255, 255, 0.55), transparent 60%),
+    radial-gradient(1px 1px at 42% 44%, rgba(255, 255, 255, 0.35), transparent 60%);
+  opacity: 0.6;
+}
+/* event horizon */
 .bh-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 24cqw;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #000;
+  box-shadow: 0 0 46px 14px rgba(0, 0, 0, 0.96), 0 0 120px rgba(var(--accent-rgb), 0.14);
+  z-index: 3;
+}
+/* thin photon ring hugging the shadow */
+.bh-photon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 25.4cqw;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  box-shadow: 0 0 14px 2px rgba(255, 240, 214, 0.6), inset 0 0 8px rgba(255, 240, 214, 0.55);
+  opacity: 0.9;
+  z-index: 4;
+}
+/* the vertically-lensed image of the disk — the Gargantua halo */
+.bh-halo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 56cqw;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    transparent 40%,
+    rgba(255, 206, 140, 0.34) 47%,
+    rgba(255, 240, 220, 0.6) 51%,
+    rgba(255, 150, 66, 0.26) 56%,
+    transparent 64%
+  );
+  filter: blur(5px);
+  animation: bh-halo-breathe 7s ease-in-out infinite alternate;
+  z-index: 2;
+}
+@keyframes bh-halo-breathe {
+  from { opacity: 0.7; }
+  to { opacity: 1; }
+}
+/* the tilted accretion disk. Rendered twice: the full ellipse behind the core,
+   and a bottom-half clip in front of it, so the disk reads as passing around
+   the hole. The conic gradient is Doppler-beamed: the approaching (left) side
+   burns white, the receding side fades to deep red. */
+.bh-disk {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 96cqw;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) rotate(-10deg) scaleY(0.22);
+  pointer-events: none;
+}
+.bh-disk i,
+.bh-disk b {
+  position: absolute;
+  inset: 0;
+  display: block;
+  border-radius: 50%;
+}
+.bh-disk i {
+  background: conic-gradient(
+    from 150deg,
+    rgba(255, 251, 242, 0.95),
+    rgba(255, 196, 110, 0.72) 70deg,
+    rgba(214, 96, 26, 0.44) 150deg,
+    rgba(112, 34, 10, 0.24) 225deg,
+    rgba(255, 214, 156, 0.62) 315deg,
+    rgba(255, 251, 242, 0.95) 360deg
+  );
+  -webkit-mask-image: radial-gradient(closest-side, transparent 26%, #fff 34%, #fff 60%, transparent 68%);
+  mask-image: radial-gradient(closest-side, transparent 26%, #fff 34%, #fff 60%, transparent 68%);
+  filter: blur(6px);
+}
+/* faint rotating streaks give the disk its motion without moving the beaming */
+.bh-disk b {
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 255, 255, 0.16) 0deg 3deg,
+    transparent 3deg 10deg
+  );
+  -webkit-mask-image: radial-gradient(closest-side, transparent 28%, #fff 36%, #fff 58%, transparent 64%);
+  mask-image: radial-gradient(closest-side, transparent 28%, #fff 36%, #fff 58%, transparent 64%);
+  filter: blur(3px);
+  opacity: 0.75;
+  animation: bh-disk-spin 5.5s linear infinite;
+}
+@keyframes bh-disk-spin {
+  to { transform: rotate(360deg); }
+}
+.bh-disk-back {
+  z-index: 1;
+  opacity: 0.92;
+}
+.bh-disk-front {
+  z-index: 5;
+  clip-path: inset(50% 0 0 0);
+}
+/* sparks spiraling in: fast orbit + shrinking radius = infall */
+.bh-mote-orbit {
+  position: absolute;
+  inset: 0;
+  animation: bh-orbit-spin var(--mt) linear infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+.bh-mote-orbit s {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffe9c9;
+  box-shadow: 0 0 9px rgba(255, 220, 160, 0.9);
+  animation: bh-infall var(--mt) linear infinite;
+  animation-delay: inherit;
+}
+@keyframes bh-infall {
+  0% { transform: translate(-50%, -50%) translateX(47cqw); opacity: 0; }
+  14% { opacity: 0.95; }
+  82% { opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) translateX(13cqw); opacity: 0; }
+}
+/* feeding flare: an expanding shockwave + brief glow when a question falls in */
+.bh-burst {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -3532,46 +3683,15 @@ input:focus-visible,
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: #000;
-  box-shadow: 0 0 44px 12px rgba(0, 0, 0, 0.95), 0 0 110px rgba(var(--accent-rgb), 0.16);
-  z-index: 3;
+  border: 2px solid rgba(255, 236, 200, 0.85);
+  background: radial-gradient(closest-side, rgba(255, 226, 178, 0.28), transparent 70%);
+  animation: bh-burst 0.9s ease-out forwards;
+  pointer-events: none;
+  z-index: 6;
 }
-.bh-photon {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 27.5cqw;
-  aspect-ratio: 1;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  box-shadow: 0 0 16px 2px rgba(255, 238, 210, 0.5), inset 0 0 10px rgba(255, 238, 210, 0.45);
-  opacity: 0.85;
-  z-index: 2;
-}
-.bh-disk {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 58cqw;
-  aspect-ratio: 1;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg 30deg,
-    rgba(var(--accent-rgb), 0.5) 95deg,
-    rgba(255, 244, 224, 0.85) 140deg,
-    rgba(var(--accent-rgb), 0.3) 225deg,
-    transparent 330deg
-  );
-  filter: blur(10px);
-  animation: bh-spin 7s linear infinite;
-  z-index: 1;
-}
-@keyframes bh-spin {
-  to {
-    transform: translate(-50%, -50%) rotate(360deg);
-  }
+@keyframes bh-burst {
+  from { opacity: 0.95; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -50%) scale(3.2); }
 }
 .bh-orbit {
   position: absolute;
@@ -3579,7 +3699,7 @@ input:focus-visible,
   animation: bh-orbit-spin var(--t) linear infinite;
   animation-delay: var(--d);
   pointer-events: none;
-  z-index: 4;
+  z-index: 7;
 }
 @keyframes bh-orbit-spin {
   from { transform: rotate(0deg); }
@@ -3745,7 +3865,11 @@ input:focus-visible,
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .bh-disk,
+  .bh-disk b,
+  .bh-halo,
+  .bh-mote-orbit,
+  .bh-mote-orbit s,
+  .bh-burst,
   .bh-orbit,
   .bh-orbit .bh-q {
     animation: none;
