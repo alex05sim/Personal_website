@@ -45,6 +45,7 @@ export function CommandMenu() {
       { id: "projects", label: "All projects", group: "Pages", icon: Layers, run: go("/projects") },
       { id: "hire-me", label: "Hire me", group: "Pages", icon: BriefcaseBusiness, run: go("/hire-me") },
       { id: "world", label: "World", group: "Pages", icon: Globe2, run: go("/world") },
+      { id: "me", label: "Me - interests & the black hole", group: "Pages", icon: Home, run: go("/me") },
       ...projects.map((project) => ({
         id: project.slug,
         label: project.title,

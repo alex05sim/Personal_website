@@ -5,7 +5,7 @@ const base = "https://alexsimpson.dev";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
-  const staticRoutes = ["", "/projects", "/hire-me", "/world", "/plain"].map((path) => ({
+  const staticRoutes = ["", "/projects", "/hire-me", "/world", "/me", "/plain"].map((path) => ({
     url: `${base}${path}`,
     lastModified: now,
   }));

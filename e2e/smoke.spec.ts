@@ -109,6 +109,26 @@ test("the resume PDF actually ships", async ({ request }) => {
   expect(res.headers()["content-type"]).toContain("pdf");
 });
 
+test("the me page answers questions via the black hole", async ({ page }) => {
+  await page.goto("/me");
+  await expect(page).toHaveTitle(/Me/);
+  await expect(page.getByRole("heading", { name: "The rest of me." })).toBeVisible();
+  // the always-rendered index row is the stable way to feed the black hole
+  await page.locator(".bh-index-q", { hasText: "Why security?" }).click();
+  await expect(page.locator(".bh-answer")).toContainText("NSA");
+});
+
+test("questions API rejects links and empty questions", async ({ request }) => {
+  const withLink = await request.post("/api/questions", {
+    data: { question: "check out https://spam.example now", website: "" },
+  });
+  expect(withLink.status()).toBe(400);
+  const empty = await request.post("/api/questions", {
+    data: { question: "   ", website: "" },
+  });
+  expect(empty.status()).toBe(400);
+});
+
 test("plain mode is a visible round-trip toggle", async ({ page }) => {
   await page.goto("/");
   const toggle = page.getByRole("link", { name: "Switch to the plain text version" });

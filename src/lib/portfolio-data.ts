@@ -179,6 +179,7 @@ export const navigationTabs = [
   { label: "Work", href: "/#work" },
   { label: "Projects", href: "/projects" },
   { label: "World", href: "/world" },
+  { label: "Me", href: "/me" },
   { label: "Contact", href: "/#contact" },
 ];
 
