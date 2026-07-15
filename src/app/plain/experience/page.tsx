@@ -30,7 +30,7 @@ export default function PlainExperiencePage() {
       <p>
         {education.degree}
         <br />
-        {education.graduation} - GPA {education.gpa}
+        {education.graduation}
       </p>
       <p>
         <strong>coursework:</strong>{" "}

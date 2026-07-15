@@ -179,7 +179,7 @@ export default function HireMePage() {
             <span>Education</span>
             <h2>{education.school}</h2>
             <p>{education.degree}</p>
-            <p>{education.graduation} - GPA {education.gpa}</p>
+            <p>{education.graduation}</p>
           </div>
           <div className="card hire-detail-card">
             <span>Current background</span>

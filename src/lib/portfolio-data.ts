@@ -162,7 +162,6 @@ export const education = {
   school: "University of California, Berkeley",
   degree: "B.A. Computer Science + Data Science",
   graduation: "Expected May 2028",
-  gpa: "3.78 / 4.0",
   coursework: [
     "CS 189 - Machine Learning",
     "CS 170 - Algorithms",

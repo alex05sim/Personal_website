@@ -163,7 +163,7 @@ function IntroBand() {
             up, can this model be believed.
           </p>
           <p className="intro-cred">
-            <span>UC Berkeley · CS + Data Science · May 2028 · GPA {education.gpa}</span>
+            <span>UC Berkeley · CS + Data Science · May 2028</span>
             <span>NSA software intern · 2023–24</span>
             <span>TS/SCI w/ polygraph · previously held, eligible</span>
           </p>
@@ -462,7 +462,7 @@ function ExperienceSection() {
                 <div className="grid gap-1">
                   <p className="edu-meta text-[var(--foreground)]">{education.degree}</p>
                   <p className="edu-meta">
-                    {education.graduation} - GPA {education.gpa}
+                    {education.graduation}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
