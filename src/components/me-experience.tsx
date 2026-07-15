@@ -73,7 +73,8 @@ function BlackHoleQA() {
         </Reveal>
 
         {!reduce ? (
-          <div className="bh-stage" aria-hidden="true">
+          <div className="bh-arena" aria-hidden="true">
+          <div className="bh-stage">
             <div className="bh-stars" />
             <div className="bh-disk bh-disk-back">
               <i />
@@ -118,6 +119,7 @@ function BlackHoleQA() {
                 </button>
               </div>
             ))}
+          </div>
           </div>
         ) : null}
 

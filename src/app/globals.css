@@ -3517,12 +3517,41 @@ input:focus-visible,
 }
 
 /* — the black hole — */
+/* full-bleed arena: the hole owns the viewport, not the content column */
+.bh-arena {
+  position: relative;
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  margin-top: 1.5rem;
+  display: grid;
+  place-items: center;
+  padding-block: clamp(1.5rem, 5vh, 4rem);
+  background:
+    radial-gradient(58% 52% at 50% 48%, rgba(var(--accent-rgb), 0.075), transparent 72%),
+    radial-gradient(95% 85% at 50% 50%, transparent 46%, rgba(2, 3, 7, 0.6) 100%);
+  overflow: clip;
+}
+/* a wider, sparser starfield across the whole arena */
+.bh-arena::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.5px 1.5px at 6% 30%, rgba(255, 255, 255, 0.65), transparent 60%),
+    radial-gradient(1px 1px at 16% 74%, rgba(255, 255, 255, 0.5), transparent 60%),
+    radial-gradient(1.5px 1.5px at 27% 12%, rgba(255, 255, 255, 0.6), transparent 60%),
+    radial-gradient(1px 1px at 84% 26%, rgba(255, 255, 255, 0.55), transparent 60%),
+    radial-gradient(1.5px 1.5px at 93% 58%, rgba(255, 255, 255, 0.65), transparent 60%),
+    radial-gradient(1px 1px at 74% 86%, rgba(255, 255, 255, 0.5), transparent 60%),
+    radial-gradient(1px 1px at 39% 92%, rgba(255, 255, 255, 0.45), transparent 60%),
+    radial-gradient(1.5px 1.5px at 62% 6%, rgba(255, 255, 255, 0.55), transparent 60%);
+  opacity: 0.55;
+}
 .bh-stage {
   position: relative;
   container-type: inline-size;
-  width: min(36rem, 92vw);
+  width: min(50rem, 92vw, 86vh);
   aspect-ratio: 1;
-  margin: 3rem auto 0;
 }
 /* faint starfield the hole sits against */
 .bh-stars {
@@ -3577,9 +3606,9 @@ input:focus-visible,
   background: radial-gradient(
     closest-side,
     transparent 40%,
-    rgba(255, 206, 140, 0.34) 47%,
-    rgba(255, 240, 220, 0.6) 51%,
-    rgba(255, 150, 66, 0.26) 56%,
+    rgba(255, 206, 140, 0.4) 47%,
+    rgba(255, 240, 220, 0.68) 51%,
+    rgba(255, 150, 66, 0.3) 56%,
     transparent 64%
   );
   filter: blur(5px);
@@ -3598,7 +3627,7 @@ input:focus-visible,
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 96cqw;
+  width: 104cqw;
   aspect-ratio: 1;
   transform: translate(-50%, -50%) rotate(-10deg) scaleY(0.22);
   pointer-events: none;
