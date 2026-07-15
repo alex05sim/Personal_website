@@ -148,41 +148,6 @@ function Chip({ children, mono }: { children: ReactNode; mono?: boolean }) {
   return <span className={`chip ${mono ? "chip-mono" : ""}`}>{children}</span>;
 }
 
-const tickerItems = [
-  "Python",
-  "C",
-  "Go",
-  "PyTorch / CUDA",
-  "CuPy",
-  "NumPy",
-  "KiCad",
-  "ESP32-S3",
-  "LoRa",
-  "AES / HMAC",
-  "RISC-V",
-  "scikit-learn",
-  "Verlet integration",
-  "Docker",
-  "Kubernetes",
-  "Linux",
-];
-
-function Ticker() {
-  const loop = [...tickerItems, ...tickerItems];
-
-  return (
-    <div className="ticker" aria-hidden="true">
-      <div className="ticker-track">
-        {loop.map((item, index) => (
-          <span className="ticker-item" key={`${item}-${index}`}>
-            {item}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 type Stat = {
   label: string;
   sub: string;
@@ -195,7 +160,7 @@ const stats: Stat[] = [
   { value: "Berkeley", label: "CS + Data Science", sub: "Expected May 2028" },
   { value: "NSA", label: "Software intern", sub: "2023 - 2024" },
   { value: "CubeSat", label: "Secure telemetry PCB", sub: "LoRa + GNSS + signing", accent: true },
-  { value: "CS 161", label: "Secure file system", sub: "Malicious datastore model" },
+  { value: "TS/SCI", label: "Clearance w/ polygraph", sub: "Previously held - eligible" },
   { count: { value: 3.78, decimals: 2 }, label: "GPA", sub: "UC Berkeley" },
 ];
 
@@ -254,7 +219,7 @@ function ApproachSection() {
           <ScrambleText
             as="h2"
             className="display text-4xl text-white sm:text-5xl"
-            text="Built to be trusted."
+            text="Working principles."
           />
         </Reveal>
         <div className="principles mt-12">
@@ -423,10 +388,10 @@ function SelectedWork() {
             <ScrambleText
               as="h2"
               className="display text-4xl text-white sm:text-5xl"
-              text="Proof, not promises."
+              text="Featured projects."
             />
             <p className="lead">
-              Real systems with real constraints - a satellite-grade PCB, a GPU physics
+              Real systems with real constraints - a CubeSat telemetry PCB, a GPU physics
               engine, and a cryptosystem that assumes the server is hostile.
             </p>
           </div>
@@ -455,7 +420,7 @@ function ExperienceSection() {
           <ScrambleText
             as="h2"
             className="display text-4xl text-white sm:text-5xl"
-            text="Where I've done the work."
+            text="Experience & education."
           />
         </Reveal>
 
@@ -547,7 +512,7 @@ export function ContactSection() {
           <ScrambleText
             as="h2"
             className="display mt-5 text-4xl text-white sm:text-5xl"
-            text="Let's build something that matters."
+            text="Let's talk."
           />
           <p className="lead mt-6 max-w-xl">{profile.availability}.</p>
           <p className="mt-4 max-w-xl text-sm leading-relaxed text-[var(--muted-2)]">
@@ -643,7 +608,6 @@ export function PortfolioExperience() {
       <FloatingTabs />
       <SpaceHero />
       <StatsStrip />
-      <Ticker />
       <DomainsSection />
       <ApproachSection />
       <SelectedWork />
