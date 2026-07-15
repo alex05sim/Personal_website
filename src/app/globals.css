@@ -4897,52 +4897,44 @@ html.lenis body {
 }
 
 /* Stats strip */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 1px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: var(--line);
+/* First-person intro band (replaced the boxed stat cards) */
+.intro-thesis {
+  margin-top: 1.4rem;
+  max-width: 46ch;
+  color: #eef1f7;
+  font-size: clamp(1.25rem, 2.2vw, 1.7rem);
+  font-weight: 550;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
 }
-.stat {
-  background: var(--bg-1);
-  padding: 1.7rem 1.5rem;
-}
-.stat .num {
-  font-size: clamp(2rem, 4vw, 2.9rem);
-  font-weight: 650;
-  letter-spacing: -0.02em;
-  line-height: 1;
-  color: #fff;
-}
-.stat .num em {
+.intro-thesis em {
   color: var(--accent);
-  font-style: normal;
+  font-style: italic;
 }
-.stat .lbl {
-  margin-top: 0.55rem;
-  color: var(--muted);
-  font-size: 0.84rem;
-}
-.stat .stat-sub {
-  margin-top: 0.22rem;
+.intro-cred {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2.2rem;
+  margin-top: 1.8rem;
   color: var(--muted-2);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-@media (max-width: 880px) {
-  .stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.intro-cred span {
+  position: relative;
 }
-@media (max-width: 520px) {
-  .stats {
-    grid-template-columns: 1fr;
-  }
+.intro-cred span + span::before {
+  content: "";
+  position: absolute;
+  left: -1.25rem;
+  top: 50%;
+  width: 0.28rem;
+  height: 0.28rem;
+  border-radius: 999px;
+  background: rgba(var(--accent-rgb), 0.65);
+  transform: translateY(-50%);
 }
 
 /* Principles / how I work */

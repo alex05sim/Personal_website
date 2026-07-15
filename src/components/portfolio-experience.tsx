@@ -25,7 +25,7 @@ import {
   skills,
   socials,
 } from "@/lib/portfolio-data";
-import { CountUp, TiltCard } from "./interactions";
+import { TiltCard } from "./interactions";
 import { ScrambleText } from "./scramble-text";
 import { SpaceHero } from "./space-hero";
 import { Reveal } from "./portfolio/shared";
@@ -148,47 +148,25 @@ function Chip({ children, mono }: { children: ReactNode; mono?: boolean }) {
   return <span className={`chip ${mono ? "chip-mono" : ""}`}>{children}</span>;
 }
 
-type Stat = {
-  label: string;
-  sub: string;
-  accent?: boolean;
-  value?: string;
-  count?: { value: number; decimals?: number; prefix?: string; suffix?: string };
-};
-
-const stats: Stat[] = [
-  { value: "Berkeley", label: "CS + Data Science", sub: "Expected May 2028" },
-  { value: "NSA", label: "Software intern", sub: "2023 - 2024" },
-  { value: "CubeSat", label: "Secure telemetry PCB", sub: "LoRa + GNSS + signing", accent: true },
-  { value: "TS/SCI", label: "Clearance w/ polygraph", sub: "Previously held - eligible" },
-  { count: { value: 3.78, decimals: 2 }, label: "GPA", sub: "UC Berkeley" },
-];
-
-function StatsStrip() {
+/** First-person intro band — replaces the old boxed stat cards. The voice
+ *  carries the pitch; the recruiter facts sit underneath as one quiet line. */
+function IntroBand() {
   return (
     <section className="section-bordered">
       <div className="shell py-16">
-        <Reveal className="stats">
-          {stats.map((stat) => {
-            const inner = stat.count ? (
-              <CountUp
-                value={stat.count.value}
-                decimals={stat.count.decimals ?? 0}
-                prefix={stat.count.prefix ?? ""}
-                suffix={stat.count.suffix ?? ""}
-              />
-            ) : (
-              stat.value
-            );
-
-            return (
-              <div className="stat" key={stat.label}>
-                <div className="num">{stat.accent ? <em>{inner}</em> : inner}</div>
-                <div className="lbl">{stat.label}</div>
-                <div className="stat-sub">{stat.sub}</div>
-              </div>
-            );
-          })}
+        <Reveal>
+          <p className="kicker">In short</p>
+          <p className="intro-thesis">
+            I got into computers by asking <em>&ldquo;what happens when this breaks?&rdquo;</em>{" "}
+            — and never really stopped. Security, hardware, and AI are the three versions of
+            that question I care about most: can this link be trusted, can this hardware hold
+            up, can this model be believed.
+          </p>
+          <p className="intro-cred">
+            <span>UC Berkeley · CS + Data Science · May 2028 · GPA {education.gpa}</span>
+            <span>NSA software intern · 2023–24</span>
+            <span>TS/SCI w/ polygraph · previously held, eligible</span>
+          </p>
         </Reveal>
       </div>
     </section>
@@ -607,7 +585,7 @@ export function PortfolioExperience() {
     <main className={`relative z-10 ${invaderActive ? "invader-active" : ""}`}>
       <FloatingTabs />
       <SpaceHero />
-      <StatsStrip />
+      <IntroBand />
       <DomainsSection />
       <ApproachSection />
       <SelectedWork />
