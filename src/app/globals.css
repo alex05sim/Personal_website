@@ -3525,10 +3525,11 @@ input:focus-visible,
   margin-top: 1.5rem;
   display: grid;
   place-items: center;
-  padding-block: clamp(1.5rem, 5vh, 4rem);
+  min-height: min(100svh, 68rem);
+  padding-block: clamp(1.5rem, 4vh, 3rem);
   background:
-    radial-gradient(58% 52% at 50% 48%, rgba(var(--accent-rgb), 0.075), transparent 72%),
-    radial-gradient(95% 85% at 50% 50%, transparent 46%, rgba(2, 3, 7, 0.6) 100%);
+    radial-gradient(58% 52% at 50% 48%, rgba(var(--accent-rgb), 0.08), transparent 72%),
+    radial-gradient(95% 85% at 50% 50%, transparent 42%, rgba(2, 3, 7, 0.66) 100%);
   overflow: clip;
 }
 /* a wider, sparser starfield across the whole arena */
@@ -3550,8 +3551,39 @@ input:focus-visible,
 .bh-stage {
   position: relative;
   container-type: inline-size;
-  width: min(50rem, 92vw, 86vh);
+  width: min(62rem, 94vw, 90svh);
   aspect-ratio: 1;
+  /* pointer parallax: --px/--py are set from the arena's pointermove */
+  transform: translate(calc(var(--px, 0) * 16px), calc(var(--py, 0) * 12px))
+    rotate(calc(var(--px, 0) * 1.2deg));
+  transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+/* faked gravitational lensing: faint smeared starlight arcs drifting around
+   the hole, far outside the disk */
+.bh-lensing {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 86cqw;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(170, 195, 255, 0.035) 0deg 9deg,
+    transparent 9deg 64deg,
+    rgba(255, 214, 165, 0.028) 64deg 71deg,
+    transparent 71deg 118deg
+  );
+  -webkit-mask-image: radial-gradient(closest-side, transparent 58%, #fff 70%, #fff 84%, transparent 95%);
+  mask-image: radial-gradient(closest-side, transparent 58%, #fff 70%, #fff 84%, transparent 95%);
+  filter: blur(11px);
+  animation: bh-lens-drift 70s linear infinite;
+  z-index: 0;
+}
+@keyframes bh-lens-drift {
+  to { transform: translate(-50%, -50%) rotate(-360deg); }
 }
 /* faint starfield the hole sits against */
 .bh-stars {
@@ -3567,6 +3599,11 @@ input:focus-visible,
     radial-gradient(1px 1px at 66% 90%, rgba(255, 255, 255, 0.55), transparent 60%),
     radial-gradient(1px 1px at 42% 44%, rgba(255, 255, 255, 0.35), transparent 60%);
   opacity: 0.6;
+  animation: bh-twinkle 6s ease-in-out infinite alternate;
+}
+@keyframes bh-twinkle {
+  from { opacity: 0.45; }
+  to { opacity: 0.75; }
 }
 /* event horizon */
 .bh-core {
@@ -3592,6 +3629,7 @@ input:focus-visible,
   border-radius: 50%;
   box-shadow: 0 0 14px 2px rgba(255, 240, 214, 0.6), inset 0 0 8px rgba(255, 240, 214, 0.55);
   opacity: 0.9;
+  transition: filter 0.45s ease;
   z-index: 4;
 }
 /* the vertically-lensed image of the disk — the Gargantua halo */
@@ -3613,6 +3651,7 @@ input:focus-visible,
   );
   filter: blur(5px);
   animation: bh-halo-breathe 7s ease-in-out infinite alternate;
+  transition: filter 0.45s ease;
   z-index: 2;
 }
 @keyframes bh-halo-breathe {
@@ -3640,18 +3679,32 @@ input:focus-visible,
   border-radius: 50%;
 }
 .bh-disk i {
-  background: conic-gradient(
-    from 150deg,
-    rgba(255, 251, 242, 0.95),
-    rgba(255, 196, 110, 0.72) 70deg,
-    rgba(214, 96, 26, 0.44) 150deg,
-    rgba(112, 34, 10, 0.24) 225deg,
-    rgba(255, 214, 156, 0.62) 315deg,
-    rgba(255, 251, 242, 0.95) 360deg
-  );
+  background:
+    /* blue-white hot inner rim — the innermost stable orbit runs hottest */
+    radial-gradient(closest-side, transparent 29%, rgba(214, 233, 255, 0.55) 33%, transparent 38%),
+    conic-gradient(
+      from 150deg,
+      rgba(255, 251, 242, 0.95),
+      rgba(255, 196, 110, 0.72) 70deg,
+      rgba(214, 96, 26, 0.44) 150deg,
+      rgba(112, 34, 10, 0.24) 225deg,
+      rgba(255, 214, 156, 0.62) 315deg,
+      rgba(255, 251, 242, 0.95) 360deg
+    );
   -webkit-mask-image: radial-gradient(closest-side, transparent 26%, #fff 34%, #fff 60%, transparent 68%);
   mask-image: radial-gradient(closest-side, transparent 26%, #fff 34%, #fff 60%, transparent 68%);
   filter: blur(6px);
+  transition: filter 0.45s ease;
+}
+/* feeding surge: the whole system brightens while the shockwave runs */
+.bh-stage.is-flaring .bh-disk i {
+  filter: blur(6px) brightness(1.55) saturate(1.15);
+}
+.bh-stage.is-flaring .bh-halo {
+  filter: blur(5px) brightness(1.7);
+}
+.bh-stage.is-flaring .bh-photon {
+  filter: brightness(1.9);
 }
 /* faint rotating streaks give the disk its motion without moving the beaming */
 .bh-disk b {
@@ -3896,12 +3949,18 @@ input:focus-visible,
 @media (prefers-reduced-motion: reduce) {
   .bh-disk b,
   .bh-halo,
+  .bh-stars,
+  .bh-lensing,
   .bh-mote-orbit,
   .bh-mote-orbit s,
   .bh-burst,
   .bh-orbit,
   .bh-orbit .bh-q {
     animation: none;
+  }
+  .bh-stage {
+    transform: none;
+    transition: none;
   }
 }
 

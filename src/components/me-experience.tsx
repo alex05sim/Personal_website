@@ -1,7 +1,7 @@
 "use client";
 
 import { Send, Sparkles } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useRef, useState } from "react";
 import { blackHoleQA, interests, weirdFaq, weirdFaqNote } from "@/lib/me-data";
 import { FloatingTabs } from "./portfolio-experience";
 import { Reveal, useHydratedReducedMotion } from "./portfolio/shared";
@@ -19,13 +19,30 @@ function BlackHoleQA() {
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [burst, setBurst] = useState(0);
+  const [flaring, setFlaring] = useState(false);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const flareTimer = useRef<number | null>(null);
 
   const active = blackHoleQA.find((item) => item.id === activeId);
 
   const feed = (id: string) => {
     setFedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
     setActiveId(id);
-    setBurst((b) => b + 1); // retriggers the accretion flare
+    setBurst((b) => b + 1); // retriggers the shockwave
+    setFlaring(true); // the disk itself surges
+    if (flareTimer.current) window.clearTimeout(flareTimer.current);
+    flareTimer.current = window.setTimeout(() => setFlaring(false), 900);
+  };
+
+  // the hole leans gently toward the pointer — parallax without a canvas
+  const onArenaPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const nx = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    const ny = ((event.clientY - rect.top) / rect.height) * 2 - 1;
+    stage.style.setProperty("--px", nx.toFixed(3));
+    stage.style.setProperty("--py", ny.toFixed(3));
   };
 
   async function submitQuestion(event: FormEvent<HTMLFormElement>) {
@@ -73,9 +90,10 @@ function BlackHoleQA() {
         </Reveal>
 
         {!reduce ? (
-          <div className="bh-arena" aria-hidden="true">
-          <div className="bh-stage">
+          <div className="bh-arena" aria-hidden="true" onPointerMove={onArenaPointerMove}>
+          <div className={`bh-stage ${flaring ? "is-flaring" : ""}`} ref={stageRef}>
             <div className="bh-stars" />
+            <div className="bh-lensing" />
             <div className="bh-disk bh-disk-back">
               <i />
               <b />
