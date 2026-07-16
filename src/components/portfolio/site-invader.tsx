@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw, Swords } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { type MouseEvent, useEffect, useRef, useState } from "react";
 
 /** Easter-egg mini-game toggled from the footer; takes over the screen while active. */
@@ -108,10 +108,14 @@ export function SiteInvader({ active, onToggle }: { active: boolean; onToggle: (
           <div className="invader-status">A/D or arrows move | Space shoots | Hits {hits}/5</div>
         </div>
       ) : null}
-      <button aria-pressed={active} className="invader-button" onClick={handleToggle} type="button">
-        {active ? <RotateCcw size={18} /> : <Swords size={18} />}
-        <span>{active ? "Restore site" : "Play site invader"}</span>
-      </button>
+      {/* the launch path is the command menu (an easter egg, not site chrome);
+          the button only appears once the game is running, to exit it */}
+      {active ? (
+        <button aria-pressed={active} className="invader-button" onClick={handleToggle} type="button">
+          <RotateCcw size={18} />
+          <span>Restore site</span>
+        </button>
+      ) : null}
     </>
   );
 }

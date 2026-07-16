@@ -5,7 +5,6 @@ import { type FormEvent, useRef, useState } from "react";
 import { blackHoleQA, interests, weirdFaq, weirdFaqNote } from "@/lib/me-data";
 import { FloatingTabs } from "./portfolio-experience";
 import { Reveal, useHydratedReducedMotion } from "./portfolio/shared";
-import { ScrambleText } from "./scramble-text";
 
 /** The Q&A black hole: preloaded questions orbit the accretion disk; clicking
  *  one feeds it past the event horizon and the answer "radiates" back out.
@@ -78,11 +77,7 @@ function BlackHoleQA() {
       <div className="shell">
         <Reveal className="section-head">
           <p className="kicker">Q&A singularity</p>
-          <ScrambleText
-            as="h2"
-            className="display text-4xl text-white sm:text-5xl"
-            text="Ask the black hole."
-          />
+          <h2 className="display text-4xl text-white sm:text-5xl">Ask the black hole.</h2>
           <p className="lead">
             Preloaded questions orbit the disk - click one and it falls in; the answer radiates
             back out. Throw in your own and it reaches me directly.
@@ -210,11 +205,7 @@ export function MeExperience() {
         <div className="shell">
           <Reveal className="section-head">
             <p className="kicker">Off duty</p>
-            <ScrambleText
-              as="h1"
-              className="display text-5xl text-white sm:text-6xl"
-              text="The rest of me."
-            />
+            <h1 className="display text-5xl text-white sm:text-6xl">The rest of me.</h1>
             <p className="lead">
               No threat models here. This is the part of the site for interests, obsessions, and
               a black hole that takes questions - because if you commit to a space theme, you
@@ -228,11 +219,7 @@ export function MeExperience() {
         <div className="shell">
           <Reveal className="section-head">
             <p className="kicker">Interests</p>
-            <ScrambleText
-              as="h2"
-              className="display text-4xl text-white sm:text-5xl"
-              text="When the laptop closes."
-            />
+            <h2 className="display text-4xl text-white sm:text-5xl">When the laptop closes.</h2>
           </Reveal>
           <div className="me-grid mt-12">
             {interests.map((interest, index) => {
@@ -257,11 +244,7 @@ export function MeExperience() {
         <div className="shell">
           <Reveal className="section-head">
             <p className="kicker">Deep-cut FAQ</p>
-            <ScrambleText
-              as="h2"
-              className="display text-4xl text-white sm:text-5xl"
-              text="The interview easter egg."
-            />
+            <h2 className="display text-4xl text-white sm:text-5xl">The interview easter egg.</h2>
             <p className="lead">{weirdFaqNote}</p>
           </Reveal>
           <dl className="me-faq mt-12">

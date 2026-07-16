@@ -11,32 +11,53 @@ const POINTS = [
   { label: "03", title: "Learn the residual", tag: "Score-based diffusion on what the fit misses" },
 ];
 
-function SolarConsole({ reduce }: { reduce: boolean }) {
-  const [ssn, setSsn] = useState(118);
-  const [flux, setFlux] = useState(146);
+/** Real solar indices from NOAA SWPC (monthly observed values). Falls back to
+ *  recent typical numbers if the fetch fails — never fabricated jitter. */
+function SolarConsole() {
+  const [data, setData] = useState<{ ssn: number; flux: number; live: boolean }>({
+    ssn: 118,
+    flux: 146,
+    live: false,
+  });
+
   useEffect(() => {
-    if (reduce) return;
-    const id = window.setInterval(() => {
-      setSsn((v) => Math.max(70, Math.min(190, v + Math.round((Math.random() - 0.5) * 9))));
-      setFlux((v) => Math.max(90, Math.min(210, v + Math.round((Math.random() - 0.5) * 7))));
-    }, 1300);
-    return () => window.clearInterval(id);
-  }, [reduce]);
+    let cancelled = false;
+    fetch("https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json", {
+      cache: "no-store",
+    })
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+      .then((rows: Array<Record<string, unknown>>) => {
+        if (cancelled || !Array.isArray(rows) || rows.length === 0) return;
+        const last = rows[rows.length - 1];
+        const ssn = Number(last["ssn"]);
+        const flux = Number(last["f10.7"] ?? last["f10_7"] ?? last["smoothed_f10.7"]);
+        if (Number.isFinite(ssn) && Number.isFinite(flux) && ssn >= 0 && flux > 0) {
+          setData({ ssn: Math.round(ssn), flux: Math.round(flux), live: true });
+        }
+      })
+      .catch(() => {
+        /* keep the fallback values */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className="solar-console">
       <div className="solar-console-head">
-        <span>Observation feed</span>
+        <span>{data.live ? "NOAA SWPC · latest monthly" : "Recent observed values"}</span>
         <strong>Cycle 25</strong>
       </div>
       <div className="solar-tele">
         <span>Sunspot №</span>
-        <b>{ssn}</b>
+        <b>{data.ssn}</b>
         <span>F10.7 flux</span>
-        <b>{flux} sfu</b>
+        <b>{data.flux} sfu</b>
         <span>Phase</span>
         <b className="solar-tele-live">
           <i aria-hidden="true" />
-          {reduce ? "DECLINING" : "NEAR MAXIMUM"}
+          DECLINING FROM MAX
         </b>
       </div>
     </div>
@@ -67,7 +88,7 @@ export function SolarIntro() {
         <p className="solar-kicker">
           <ScrambleText as="span" text="SOLAR OBSERVATION // CYCLE 25" duration={1500} />
         </p>
-        <ScrambleText as="h2" className="solar-title" text="READING THE SUN'S CYCLE" duration={1400} />
+        <h2 className="solar-title">READING THE SUN&apos;S CYCLE</h2>
         <p className="solar-lead">
           A generative model of the Sun&rsquo;s butterfly diagram — a physically motivated classical
           model rebuilds each cycle&rsquo;s sunspot wing from its amplitude alone, and a diffusion
@@ -85,7 +106,7 @@ export function SolarIntro() {
           ))}
         </div>
 
-        <SolarConsole reduce={reduce} />
+        <SolarConsole />
 
         <a className="solar-cta" href="#case-study">
           Open the analysis

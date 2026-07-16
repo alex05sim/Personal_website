@@ -68,6 +68,21 @@ export function CommandMenu() {
         icon: social.label === "Email" ? Mail : social.icon,
         run: social.href.startsWith("http") ? external(social.href) : external(social.href),
       })),
+      {
+        id: "invader",
+        label: "site invader",
+        group: "???",
+        icon: Home,
+        run: () => {
+          setOpen(false);
+          if (window.location.pathname !== "/") {
+            router.push("/");
+            window.setTimeout(() => window.dispatchEvent(new Event("site:invader")), 900);
+          } else {
+            window.dispatchEvent(new Event("site:invader"));
+          }
+        },
+      },
     ];
   }, [router]);
 

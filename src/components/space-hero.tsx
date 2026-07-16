@@ -1209,12 +1209,12 @@ export function SpaceHero() {
           >
             <button type="button" onClick={() => launch("hope")} className="hero-mission-cue">
               <span className="hero-mission-dot" aria-hidden="true" />
-              Click the amber satellite to enter Operation HOPE
+              The amber satellite opens the CubeSat case study
               <ArrowUpRight size={14} />
             </button>
             <button type="button" onClick={() => launch("sun")} className="hero-mission-cue hero-sun-cue">
               <span className="hero-mission-dot hero-sun-dot" aria-hidden="true" />
-              Click the Sun for solar-cycle research
+              The Sun opens the solar-cycle research
               <ArrowUpRight size={14} />
             </button>
           </motion.div>

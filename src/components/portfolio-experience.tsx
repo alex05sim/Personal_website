@@ -26,7 +26,6 @@ import {
   socials,
 } from "@/lib/portfolio-data";
 import { TiltCard } from "./interactions";
-import { ScrambleText } from "./scramble-text";
 import { SpaceHero } from "./space-hero";
 import { Reveal } from "./portfolio/shared";
 import { SiteInvader } from "./portfolio/site-invader";
@@ -194,11 +193,7 @@ function ApproachSection() {
       <div className="shell">
         <Reveal className="section-head">
           <p className="kicker">How I work</p>
-          <ScrambleText
-            as="h2"
-            className="display text-4xl text-white sm:text-5xl"
-            text="Working principles."
-          />
+          <h2 className="display text-4xl text-white sm:text-5xl">Working principles.</h2>
         </Reveal>
         <div className="principles mt-12">
           {principles.map((principle, index) => (
@@ -222,11 +217,7 @@ function DomainsSection() {
       <div className="shell">
         <Reveal className="section-head">
           <p className="kicker">What I build</p>
-          <ScrambleText
-            as="h2"
-            className="display text-4xl text-white sm:text-5xl"
-            text="Three layers, one way of working."
-          />
+          <h2 className="display text-4xl text-white sm:text-5xl">Three layers, one way of working.</h2>
           <p className="lead">
             Security, hardware, and AI look like separate worlds. I treat them as one
             discipline: figure out where things break, then build systems that hold up.
@@ -363,11 +354,7 @@ function SelectedWork() {
         <Reveal className="flex flex-wrap items-end justify-between gap-6">
           <div className="section-head">
             <p className="kicker">Selected work</p>
-            <ScrambleText
-              as="h2"
-              className="display text-4xl text-white sm:text-5xl"
-              text="Featured projects."
-            />
+            <h2 className="display text-4xl text-white sm:text-5xl">Featured projects.</h2>
             <p className="lead">
               Real systems with real constraints - a CubeSat telemetry PCB, a GPU physics
               engine, and a cryptosystem that assumes the server is hostile.
@@ -395,11 +382,7 @@ function ExperienceSection() {
       <div className="shell">
         <Reveal className="section-head">
           <p className="kicker">Background</p>
-          <ScrambleText
-            as="h2"
-            className="display text-4xl text-white sm:text-5xl"
-            text="Experience & education."
-          />
+          <h2 className="display text-4xl text-white sm:text-5xl">Experience &amp; education.</h2>
         </Reveal>
 
         <div className="mt-14 grid gap-10 lg:grid-cols-[1.5fr_1fr]">
@@ -487,11 +470,7 @@ export function ContactSection() {
       <div className="shell grid gap-12 lg:grid-cols-[1.1fr_0.9fr]">
         <Reveal>
           <p className="kicker">Contact</p>
-          <ScrambleText
-            as="h2"
-            className="display mt-5 text-4xl text-white sm:text-5xl"
-            text="Let's talk."
-          />
+          <h2 className="display mt-5 text-4xl text-white sm:text-5xl">Let&apos;s talk.</h2>
           <p className="lead mt-6 max-w-xl">{profile.availability}.</p>
           <p className="mt-4 max-w-xl text-sm leading-relaxed text-[var(--muted-2)]">
             {profile.clearance}.
@@ -552,11 +531,7 @@ function SkillsSection() {
       <div className="shell">
         <Reveal className="section-head">
           <p className="kicker">Toolbox</p>
-          <ScrambleText
-            as="h2"
-            className="display text-4xl text-white sm:text-5xl"
-            text="The tools I reach for."
-          />
+          <h2 className="display text-4xl text-white sm:text-5xl">The tools I reach for.</h2>
         </Reveal>
 
         <div className="skills-grid mt-12">
@@ -580,6 +555,13 @@ function SkillsSection() {
 
 export function PortfolioExperience() {
   const [invaderActive, setInvaderActive] = useState(false);
+
+  // The invader easter egg launches from the command menu only.
+  useEffect(() => {
+    const toggle = () => setInvaderActive((current) => !current);
+    window.addEventListener("site:invader", toggle);
+    return () => window.removeEventListener("site:invader", toggle);
+  }, []);
 
   return (
     <main className={`relative z-10 ${invaderActive ? "invader-active" : ""}`}>
